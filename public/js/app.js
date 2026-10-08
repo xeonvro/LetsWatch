@@ -630,9 +630,19 @@ const Player = {
       DOM.cinemaVideo.style.display = 'block';
       this.destroyHls();
       DOM.cinemaVideo.src = url;
-      DOM.cinemaVideo.currentTime = initialTime || 0;
+      if (initialTime > 0) {
+        const setInitialTime = () => {
+          try { DOM.cinemaVideo.currentTime = initialTime; } catch (e) {}
+          DOM.cinemaVideo.removeEventListener('loadedmetadata', setInitialTime);
+        };
+        if (DOM.cinemaVideo.readyState >= 1) {
+          try { DOM.cinemaVideo.currentTime = initialTime; } catch (e) {}
+        } else {
+          DOM.cinemaVideo.addEventListener('loadedmetadata', setInitialTime);
+        }
+      }
       if (autoPlay) {
-        DOM.cinemaVideo.play().catch(() => {});
+        this.play();
       }
     }
   },
@@ -840,8 +850,12 @@ function applyRoomSyncAction(action, videoState, senderName) {
       break;
 
     case 'play':
-      if (drift > 0.4) Player.seek(targetTime);
-      Player.play();
+      if (videoState.url && (!DOM.cinemaVideo.src || !DOM.cinemaVideo.src.includes(videoState.url))) {
+        Player.loadSource(videoState.url, videoState.videoType, targetTime, true);
+      } else {
+        if (drift > 0.4) Player.seek(targetTime);
+        Player.play();
+      }
       flashCenterAction('play');
       showSyncBadge(`Play by ${senderName}`);
       break;
@@ -867,9 +881,13 @@ function applyRoomSyncAction(action, videoState, senderName) {
       break;
 
     case 'force_resync':
-      Player.seek(targetTime);
-      if (videoState.isPlaying) Player.play();
-      else Player.pause();
+      if (videoState.url && (!DOM.cinemaVideo.src || !DOM.cinemaVideo.src.includes(videoState.url))) {
+        Player.loadSource(videoState.url, videoState.videoType, targetTime, videoState.isPlaying);
+      } else {
+        Player.seek(targetTime);
+        if (videoState.isPlaying) Player.play();
+        else Player.pause();
+      }
       showSyncBadge(`Force Re-synced (Drift ${drift.toFixed(2)}s)`);
       playSound('sync');
       break;
@@ -1288,7 +1306,7 @@ function setupEventListeners() {
   // Copy Video URL Button (Bottom card)
   if (DOM.copyVideoUrlBottomBtn) {
     DOM.copyVideoUrlBottomBtn.addEventListener('click', () => {
-      const videoUrl = DOM.streamUrlInput.value || DOM.cinemaVideo.currentSrc || DOM.cinemaVideo.src;
+      const videoUrl = (DOM.streamUrlInput ? DOM.streamUrlInput.value : '') || DOM.cinemaVideo.currentSrc || DOM.cinemaVideo.src;
       if (videoUrl) {
         navigator.clipboard.writeText(videoUrl).then(() => {
           showToast('Video stream URL copied to clipboard!', 'success');
@@ -1318,7 +1336,7 @@ function setupEventListeners() {
     initLucide();
   });
 
-  // Stream Input & Update / Play Buttons
+  // Stream Input & Update / Play Buttons (if present)
   if (DOM.loadStreamBtn) {
     DOM.loadStreamBtn.addEventListener('click', () => {
       broadcastNewStreamFromInput();
@@ -1331,24 +1349,32 @@ function setupEventListeners() {
     });
   }
 
-  DOM.streamUrlInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') broadcastNewStreamFromInput();
-  });
+  if (DOM.streamUrlInput) {
+    DOM.streamUrlInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') broadcastNewStreamFromInput();
+    });
 
-  DOM.streamUrlInput.addEventListener('input', () => {
-    DOM.clearStreamInputBtn.style.display = DOM.streamUrlInput.value ? 'flex' : 'none';
-  });
+    DOM.streamUrlInput.addEventListener('input', () => {
+      if (DOM.clearStreamInputBtn) {
+        DOM.clearStreamInputBtn.style.display = DOM.streamUrlInput.value ? 'flex' : 'none';
+      }
+    });
+  }
 
-  DOM.clearStreamInputBtn.addEventListener('click', () => {
-    DOM.streamUrlInput.value = '';
-    DOM.clearStreamInputBtn.style.display = 'none';
-  });
+  if (DOM.clearStreamInputBtn) {
+    DOM.clearStreamInputBtn.addEventListener('click', () => {
+      if (DOM.streamUrlInput) DOM.streamUrlInput.value = '';
+      DOM.clearStreamInputBtn.style.display = 'none';
+    });
+  }
 
-  // Preset Streams Menu
-  DOM.presetDropdownBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    DOM.presetDropdownMenu.classList.toggle('open');
-  });
+  // Preset Streams Menu (if present)
+  if (DOM.presetDropdownBtn) {
+    DOM.presetDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (DOM.presetDropdownMenu) DOM.presetDropdownMenu.classList.toggle('open');
+    });
+  }
 
   document.querySelectorAll('.preset-item').forEach(item => {
     item.addEventListener('click', () => {
@@ -1356,8 +1382,8 @@ function setupEventListeners() {
       const type = item.getAttribute('data-type');
       const title = item.getAttribute('data-title');
 
-      DOM.streamUrlInput.value = url;
-      DOM.presetDropdownMenu.classList.remove('open');
+      if (DOM.streamUrlInput) DOM.streamUrlInput.value = url;
+      if (DOM.presetDropdownMenu) DOM.presetDropdownMenu.classList.remove('open');
 
       emitSyncAction('change_video', { url, videoType: type, title });
     });
@@ -1514,13 +1540,44 @@ function setupEventListeners() {
     });
   });
 
-  // Mobile Unmute Overlay Button
-  DOM.mobileUnmuteBtn.addEventListener('click', () => {
+  // Mobile Unmute & Realtime Sync Handler
+  function handleUnmuteAndSync(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     DOM.cinemaVideo.muted = false;
-    Player.play();
-    DOM.mobileUnmuteOverlay.style.display = 'none';
-    showToast('Audio synchronized!', 'success');
-  });
+    DOM.cinemaVideo.volume = 1.0;
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    if (DOM.mobileUnmuteOverlay) {
+      DOM.mobileUnmuteOverlay.style.display = 'none';
+    }
+    // Attempt authentic user gesture play
+    const p = DOM.cinemaVideo.play();
+    if (p !== undefined) {
+      p.then(() => {
+        updatePlayPauseButtonUI(true);
+      }).catch(err => {
+        console.warn('Gesture playback notice:', err);
+      });
+    }
+    // Immediately ask server for exact room timestamp and playback state
+    if (state.socket && state.socket.connected) {
+      state.socket.emit('request_resync');
+    }
+    showToast('🔊 Audio synchronized with room!', 'success');
+  }
+
+  if (DOM.mobileUnmuteBtn) {
+    DOM.mobileUnmuteBtn.addEventListener('click', handleUnmuteAndSync);
+    DOM.mobileUnmuteBtn.addEventListener('touchend', handleUnmuteAndSync, { passive: false });
+  }
+  if (DOM.mobileUnmuteOverlay) {
+    DOM.mobileUnmuteOverlay.addEventListener('click', handleUnmuteAndSync);
+    DOM.mobileUnmuteOverlay.addEventListener('touchend', handleUnmuteAndSync, { passive: false });
+  }
 
   // Sidebar Toggle
   if (DOM.toggleSidebarBtn) {

@@ -2905,7 +2905,9 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 30;
+  z-index: 50;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 .btn-mobile-unmute {
