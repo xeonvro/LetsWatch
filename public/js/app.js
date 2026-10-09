@@ -1192,15 +1192,6 @@ function setupEventListeners() {
     });
   }
 
-  // Sample chips on home page
-  document.querySelectorAll('#homeCreateForm .sample-chip-btn').forEach(chip => {
-    chip.addEventListener('click', () => {
-      const url = chip.getAttribute('data-url');
-      const title = chip.getAttribute('data-title');
-      if (DOM.homeStreamUrlInput) DOM.homeStreamUrlInput.value = url;
-      if (DOM.homeClearStreamBtn) DOM.homeClearStreamBtn.style.display = 'flex';
-    });
-  });
 
   // Quick join room tags
   document.querySelectorAll('.quick-join-tag').forEach(tag => {

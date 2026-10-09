@@ -3687,36 +3687,6 @@ input:checked + .slider:before {
 }
 .btn-hub-clear:hover { background: rgba(255, 255, 255, 0.18); color: #ffffff; }
 
-.quick-samples-row {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  margin-top: 0.25rem;
-}
-.samples-title {
-  font-size: 0.73rem;
-  color: #71717a;
-  font-weight: 700;
-}
-
-.sample-chip-btn {
-  padding: 0.32rem 0.72rem;
-  font-size: 0.74rem;
-  font-weight: 600;
-  background: #18181b;
-  border: 1px solid #27272a;
-  border-radius: 999px;
-  color: #a1a1aa;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.sample-chip-btn:hover {
-  background: #27272a;
-  color: #ffffff;
-  border-color: #3f3f46;
-}
-
 /* Room Code Box (Clean Standard Controls) */
 .hub-code-box {
   background: #151518;
