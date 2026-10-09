@@ -2683,11 +2683,11 @@ input:checked + .slider:before {
   border-radius: 999px;
 }
 
-/* 3 Balanced Action Buttons Grid */
+/* 2 Balanced Action Buttons Grid */
 .active-room-actions-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.55rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
   width: 100%;
 }
 
@@ -3848,11 +3848,11 @@ input:checked + .slider:before {
   border-radius: 999px;
 }
 
-/* Balanced 3-Button Action Grid */
+/* Balanced 2-Button Action Grid */
 .code-actions-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.55rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
   width: 100%;
 }
 
