@@ -123,7 +123,20 @@ function getRoomSnapshot(room) {
   };
 }
 
-// API endpoint to inspect active rooms
+function getGlobalLiveStats() {
+  const activeRooms = Array.from(rooms.values()).filter(r => r.users.size > 0);
+  const totalLiveUsers = io.engine ? io.engine.clientsCount : (io.sockets && io.sockets.sockets ? io.sockets.sockets.size : 0);
+  return {
+    totalUsers: totalLiveUsers,
+    activeRoomsCount: activeRooms.length
+  };
+}
+
+function broadcastGlobalLiveStats() {
+  io.emit('global_live_stats', getGlobalLiveStats());
+}
+
+// API endpoint to inspect active rooms and live stats
 app.get('/api/rooms', (req, res) => {
   const roomList = Array.from(rooms.values()).map(r => ({
     id: r.id,
@@ -132,7 +145,13 @@ app.get('/api/rooms', (req, res) => {
     currentVideo: r.videoState.title,
     isPlaying: r.videoState.isPlaying
   }));
-  res.json({ success: true, rooms: roomList });
+  const stats = getGlobalLiveStats();
+  res.json({
+    success: true,
+    rooms: roomList,
+    totalUsers: stats.totalUsers,
+    activeRoomsCount: stats.activeRoomsCount
+  });
 });
 
 // API endpoint to get network IP or cloud URL for mobile and remote connections
@@ -169,9 +188,12 @@ app.get('/api/network-info', (req, res) => {
   });
 });
 
-// Socket.IO real-time handlers
 io.on('connection', (socket) => {
   let currentRoomId = null;
+
+  // Send initial real live stats to connected client and update all clients
+  socket.emit('global_live_stats', getGlobalLiveStats());
+  broadcastGlobalLiveStats();
 
   // Latency ping-pong
   socket.on('latency_ping', (clientTimestamp) => {
@@ -257,6 +279,8 @@ io.on('connection', (socket) => {
       users: userList,
       hostId: room.hostId
     });
+
+    broadcastGlobalLiveStats();
   });
 
   // Action Synchronization (play, pause, seek, playbackRate, change_video)
@@ -442,9 +466,15 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Leave room event
+  socket.on('leave_room', () => {
+    leaveCurrentRoom();
+  });
+
   // Disconnect & cleanup
   socket.on('disconnect', () => {
     leaveCurrentRoom();
+    broadcastGlobalLiveStats();
   });
 
   function leaveCurrentRoom() {
@@ -496,6 +526,7 @@ io.on('connection', (socket) => {
     }
 
     currentRoomId = null;
+    broadcastGlobalLiveStats();
   }
 });
 

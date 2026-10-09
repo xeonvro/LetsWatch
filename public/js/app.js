@@ -44,6 +44,7 @@ const DOM = {
   homePageContainer: document.getElementById('homePageContainer'),
   homeActiveRoomsChip: document.getElementById('homeActiveRoomsChip'),
   homeActiveCount: document.getElementById('homeActiveCount'),
+  homeHeroLiveUsers: document.getElementById('homeHeroLiveUsers'),
   homeTabCreateBtn: document.getElementById('homeTabCreateBtn'),
   homeTabWatchBtn: document.getElementById('homeTabWatchBtn'),
   homeCreateForm: document.getElementById('homeCreateForm'),
@@ -409,6 +410,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initLucide();
   setupEventListeners();
   initSocket();
+  loadActiveRooms();
+  setInterval(loadActiveRooms, 5000);
 });
 
 // --- View Switcher: Home <-> Theater ---
@@ -424,6 +427,9 @@ function enterTheaterMode(videoUrl, videoTitle) {
   }
 
   updateRoomCodeDisplays(state.roomId);
+  if (state.socket && state.socket.connected) {
+    joinCurrentRoom();
+  }
   initLucide();
 }
 
@@ -431,6 +437,9 @@ function goHome() {
   if (DOM.appLayout) DOM.appLayout.style.display = 'none';
   if (DOM.homePageContainer) DOM.homePageContainer.style.display = 'flex';
   state.inTheater = false;
+  if (state.socket && state.socket.connected) {
+    state.socket.emit('leave_room');
+  }
   loadActiveRooms();
   initLucide();
 }
@@ -441,53 +450,43 @@ function updateHomePageRoomCode(code) {
   if (DOM.homeShareUrlPreview) DOM.homeShareUrlPreview.value = shareUrl;
 }
 
+function updateLiveStatsUI(totalUsers = 0, activeRoomsCount = 0) {
+  const users = Math.max(0, parseInt(totalUsers, 10) || 0);
+  const rooms = Math.max(0, parseInt(activeRoomsCount, 10) || 0);
+
+  if (DOM.homeHeroLiveUsers) {
+    const parent = DOM.homeHeroLiveUsers.parentElement;
+    if (parent) {
+      const usersLabel = users === 1 ? ' PERSON' : ' PEOPLE';
+      parent.innerHTML = `<i data-lucide="users" class="w-3.5 h-3.5"></i> <strong id="homeHeroLiveUsers">${users}</strong>${usersLabel}`;
+      DOM.homeHeroLiveUsers = document.getElementById('homeHeroLiveUsers');
+    } else {
+      DOM.homeHeroLiveUsers.textContent = users;
+    }
+  }
+
+  if (DOM.homeActiveCount) {
+    const parent = DOM.homeActiveCount.parentElement;
+    if (parent) {
+      const roomsLabel = rooms === 1 ? ' ROOM' : ' ROOMS';
+      parent.innerHTML = `<i data-lucide="radio" class="w-3.5 h-3.5"></i> <strong id="homeActiveCount">${rooms}</strong>${roomsLabel}`;
+      DOM.homeActiveCount = document.getElementById('homeActiveCount');
+    } else {
+      DOM.homeActiveCount.textContent = rooms;
+    }
+  }
+  initLucide();
+}
+
 function loadActiveRooms() {
   fetch('/api/rooms')
     .then(r => r.json())
     .then(data => {
-      if (!DOM.homeActiveRoomsList) return;
-      const rooms = data.rooms || [];
-
-      // Update count chip
-      const activeCount = rooms.filter(r => r.userCount > 0).length;
-      if (DOM.homeActiveCount) DOM.homeActiveCount.textContent = activeCount;
-
-      if (rooms.length === 0) {
-        DOM.homeActiveRoomsList.innerHTML = '<p class="empty-rooms-text">No active watch parties yet. Be the first to start one!</p>';
-        return;
-      }
-
-      DOM.homeActiveRoomsList.innerHTML = '';
-      rooms.forEach(room => {
-        const item = document.createElement('div');
-        item.className = 'active-room-item';
-        item.innerHTML = `
-          <div class="active-room-info-left">
-            <div>
-              <div class="active-room-title">${room.id}</div>
-              <div class="active-room-media-title">${room.currentVideo || 'Idle'}</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:0.75rem;">
-            <span style="font-size:0.75rem;color:#64748b;">${room.userCount} viewer${room.userCount !== 1 ? 's' : ''}</span>
-            <button class="btn-join-room-pill" data-room="${room.id}">Join Party</button>
-          </div>
-        `;
-        item.querySelector('.btn-join-room-pill').addEventListener('click', () => {
-          state.roomId = room.id;
-          state.pendingInitialVideo = null;
-          enterTheaterMode();
-          // socket will join when connected
-          if (state.socket && state.socket.connected) joinCurrentRoom();
-        });
-        DOM.homeActiveRoomsList.appendChild(item);
-      });
+      const totalUsers = typeof data.totalUsers === 'number' ? data.totalUsers : 0;
+      const activeCount = typeof data.activeRoomsCount === 'number' ? data.activeRoomsCount : (data.rooms ? data.rooms.filter(r => r.userCount > 0).length : 0);
+      updateLiveStatsUI(totalUsers, activeCount);
     })
-    .catch(() => {
-      if (DOM.homeActiveRoomsList) {
-        DOM.homeActiveRoomsList.innerHTML = '<p class="empty-rooms-text">Could not load rooms.</p>';
-      }
-    });
+    .catch(() => {});
 }
 
 
@@ -503,9 +502,16 @@ function initSocket() {
 
   state.socket.on('connect', () => {
     state.user.id = state.socket.id;
-    // Join initial room
-    joinCurrentRoom();
+    // Only join a room if currently inside theater mode
+    if (state.inTheater) {
+      joinCurrentRoom();
+    }
     startPingInterval();
+  });
+
+  // Global live statistics broadcast from server
+  state.socket.on('global_live_stats', ({ totalUsers, activeRoomsCount }) => {
+    updateLiveStatsUI(totalUsers, activeRoomsCount);
   });
 
   // Room Joined initial full state
