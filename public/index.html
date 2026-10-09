@@ -72,11 +72,16 @@
         </div>
       </div>
       <div class="home-nav-right">
+        <button type="button" class="btn-nav-ghost" id="homeNavSignInBtn">Sign In</button>
         <button type="button" class="btn-nav-ghost" id="homeNavJoinBtn">Join Room</button>
         <button type="button" class="btn-nav-primary-pill" id="homeNavCreateBtn">
           <span>Get Started</span>
           <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
         </button>
+        <div class="nav-signed-in-user" id="homeNavUserPill" style="display: none;">
+          <span class="nav-user-badge"><i data-lucide="user" class="w-3.5 h-3.5 text-red-500"></i> <span id="homeNavUsernameDisplay">User</span></span>
+          <button type="button" class="btn-sign-out" id="homeSignOutBtn" title="Sign Out"><i data-lucide="log-out" class="w-3.5 h-3.5"></i></button>
+        </div>
       </div>
     </header>
 
@@ -128,6 +133,10 @@
           </button>
           <button type="button" class="btn-watch-dark-pill" id="heroJoinBtn">
             <span>Join Room</span>
+          </button>
+          <button type="button" class="btn-watch-ghost-pill" id="heroSignInBtn">
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+            <span>Sign In</span>
           </button>
         </div>
       </div>
@@ -1009,6 +1018,125 @@
       <button type="button" class="btn-secondary" id="closeMobileModalBtn" style="width: 100%; justify-content: center;">
         <span>Done / Close</span>
       </button>
+    </div>
+  </div>
+
+  <!-- WatchTogether Sign In / Auth Modal -->
+  <div class="modal-backdrop" id="authModal" style="display: none;">
+    <div class="modal-glass-card modal-auth-card">
+      <!-- Left Branding & Perks Panel -->
+      <div class="auth-left-panel">
+        <div class="auth-brand-badge">
+          <span class="brand-main">Watch<span class="brand-red-dot">.</span></span>
+        </div>
+        <h2 class="auth-hero-title" id="authLeftTitle">
+          Join Your <span class="text-red">WatchTogether</span> Account
+        </h2>
+        <p class="auth-hero-desc">
+          Sign in or create your profile to host watch parties, customize your avatar, and sync with friends in seconds.
+        </p>
+
+        <div class="auth-features-list">
+          <div class="auth-feature-item">
+            <span class="feature-check-icon"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <div class="feature-text">
+              <strong>A unique Hash Key</strong>
+              <span>to find and invite friends easily.</span>
+            </div>
+          </div>
+          <div class="auth-feature-item">
+            <span class="feature-check-icon"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <div class="feature-text">
+              <strong>Customizable profile</strong>
+              <span>with unique nickname &amp; avatar.</span>
+            </div>
+          </div>
+          <div class="auth-feature-item">
+            <span class="feature-check-icon"><i data-lucide="check" class="w-3.5 h-3.5"></i></span>
+            <div class="feature-text">
+              <strong>Instant access</strong>
+              <span>to 100% synchronized rooms and chat.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-secure-note">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>Your data is secure and never shared.</span>
+        </div>
+      </div>
+
+      <!-- Right Form Panel -->
+      <div class="auth-right-panel">
+        <button type="button" class="btn-close-modal" id="closeAuthModalBtn" title="Close">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+
+        <div class="auth-form-header">
+          <h2 id="authFormTitle">Sign In</h2>
+          <p id="authFormSub">Enter your account to start watching.</p>
+        </div>
+
+        <form id="authForm" class="auth-form-body">
+          <div class="auth-field-group" id="authNameFieldGroup" style="display: none;">
+            <label for="authNameInput">Your Name / Nickname</label>
+            <div class="auth-input-wrap">
+              <i data-lucide="user" class="w-4 h-4 auth-input-icon"></i>
+              <input type="text" id="authNameInput" placeholder="e.g. Rahul" maxlength="30" />
+            </div>
+          </div>
+
+          <div class="auth-field-group">
+            <label for="authEmailInput">Email or Username</label>
+            <div class="auth-input-wrap">
+              <i data-lucide="mail" class="w-4 h-4 auth-input-icon"></i>
+              <input type="text" id="authEmailInput" placeholder="name@example.com" required autocomplete="username" />
+            </div>
+          </div>
+
+          <div class="auth-field-group">
+            <label for="authPasswordInput">Password</label>
+            <div class="auth-input-wrap">
+              <i data-lucide="lock" class="w-4 h-4 auth-input-icon"></i>
+              <input type="password" id="authPasswordInput" placeholder="••••••••" required autocomplete="current-password" />
+              <button type="button" class="btn-toggle-pwd" id="authTogglePwdBtn" title="Toggle password visibility">
+                <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="auth-options-row">
+            <label class="auth-checkbox-label">
+              <input type="checkbox" id="authRememberCheckbox" checked />
+              <span>Remember me</span>
+            </label>
+            <button type="button" class="btn-text-link" id="authForgotPwdBtn">Forgot password?</button>
+          </div>
+
+          <button type="submit" class="btn-auth-submit" id="authSubmitBtn">
+            <span>Sign In</span>
+          </button>
+
+          <div class="auth-divider">
+            <span>OR CONTINUE WITH</span>
+          </div>
+
+          <button type="button" class="btn-google-auth" id="authGoogleBtn">
+            <svg class="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <p class="auth-toggle-mode-text">
+            <span id="authTogglePromptText">Don't have an account?</span>
+            <button type="button" class="btn-auth-switch" id="authSwitchModeBtn">Create one</button>
+          </p>
+        </form>
+      </div>
     </div>
   </div>
 

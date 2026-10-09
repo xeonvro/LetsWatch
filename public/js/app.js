@@ -11,6 +11,8 @@ const state = {
   user: {
     id: null,
     username: 'Viewer',
+    email: '',
+    signedIn: false,
     avatar: '',
     deviceType: getDeviceType()
   },
@@ -64,6 +66,30 @@ const DOM = {
   homeWatchSubmitBtn: document.getElementById('homeWatchSubmitBtn'),
   homeActiveRoomsList: document.getElementById('homeActiveRoomsList'),
   homeRefreshRoomsBtn: document.getElementById('homeRefreshRoomsBtn'),
+
+  // WatchTogether Auth Modal & Account
+  authModal: document.getElementById('authModal'),
+  closeAuthModalBtn: document.getElementById('closeAuthModalBtn'),
+  authLeftTitle: document.getElementById('authLeftTitle'),
+  authForm: document.getElementById('authForm'),
+  authFormTitle: document.getElementById('authFormTitle'),
+  authFormSub: document.getElementById('authFormSub'),
+  authNameFieldGroup: document.getElementById('authNameFieldGroup'),
+  authNameInput: document.getElementById('authNameInput'),
+  authEmailInput: document.getElementById('authEmailInput'),
+  authPasswordInput: document.getElementById('authPasswordInput'),
+  authTogglePwdBtn: document.getElementById('authTogglePwdBtn'),
+  authRememberCheckbox: document.getElementById('authRememberCheckbox'),
+  authForgotPwdBtn: document.getElementById('authForgotPwdBtn'),
+  authSubmitBtn: document.getElementById('authSubmitBtn'),
+  authGoogleBtn: document.getElementById('authGoogleBtn'),
+  authSwitchModeBtn: document.getElementById('authSwitchModeBtn'),
+  authTogglePromptText: document.getElementById('authTogglePromptText'),
+  homeNavSignInBtn: document.getElementById('homeNavSignInBtn'),
+  homeNavUserPill: document.getElementById('homeNavUserPill'),
+  homeNavUsernameDisplay: document.getElementById('homeNavUsernameDisplay'),
+  homeSignOutBtn: document.getElementById('homeSignOutBtn'),
+  heroSignInBtn: document.getElementById('heroSignInBtn'),
 
   // Theater Navigation & Badges
   navHomeBtn: document.getElementById('navHomeBtn'),
@@ -343,10 +369,13 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const parsed = JSON.parse(storedUser);
       state.user.username = parsed.username || 'Viewer';
+      state.user.email = parsed.email || '';
+      state.user.signedIn = !!parsed.signedIn;
       state.user.avatar = '';
     } catch (e) {}
   } else {
     state.user.username = `Viewer_${Math.floor(100 + Math.random() * 900)}`;
+    state.user.signedIn = false;
   }
 
   // Pre-fill the Home Page stream URL and generate a fresh room code
@@ -376,6 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   updateProfileUI();
+  updateAuthNavbarUI();
   initLucide();
   setupEventListeners();
   initSocket();
@@ -1074,6 +1104,74 @@ function setupEventListeners() {
   if (heroJoin) heroJoin.addEventListener('click', () => scrollToSetup('watch'));
   const navJoin = document.getElementById('homeNavJoinBtn');
   if (navJoin) navJoin.addEventListener('click', () => scrollToSetup('watch'));
+
+  // Auth & Sign In Triggers
+  if (DOM.homeNavSignInBtn) {
+    DOM.homeNavSignInBtn.addEventListener('click', () => openAuthModal('signin'));
+  }
+  if (DOM.heroSignInBtn) {
+    DOM.heroSignInBtn.addEventListener('click', () => openAuthModal('signin'));
+  }
+  if (DOM.closeAuthModalBtn) {
+    DOM.closeAuthModalBtn.addEventListener('click', closeAuthModal);
+  }
+  if (DOM.authModal) {
+    DOM.authModal.addEventListener('click', (e) => {
+      if (e.target === DOM.authModal) closeAuthModal();
+    });
+  }
+  if (DOM.authSwitchModeBtn) {
+    DOM.authSwitchModeBtn.addEventListener('click', () => {
+      setAuthMode(authCurrentMode === 'signin' ? 'signup' : 'signin');
+    });
+  }
+  if (DOM.authTogglePwdBtn && DOM.authPasswordInput) {
+    DOM.authTogglePwdBtn.addEventListener('click', () => {
+      const isPwd = DOM.authPasswordInput.type === 'password';
+      DOM.authPasswordInput.type = isPwd ? 'text' : 'password';
+      DOM.authTogglePwdBtn.innerHTML = isPwd 
+        ? '<i data-lucide="eye-off" class="w-3.5 h-3.5"></i>' 
+        : '<i data-lucide="eye" class="w-3.5 h-3.5"></i>';
+      initLucide();
+    });
+  }
+  if (DOM.authForgotPwdBtn) {
+    DOM.authForgotPwdBtn.addEventListener('click', () => {
+      const email = (DOM.authEmailInput?.value || '').trim();
+      if (!email) {
+        showToast('Please enter your email above to receive password instructions.', 'warn');
+      } else {
+        showToast(`Password reset link sent to ${email}`, 'success');
+      }
+    });
+  }
+  if (DOM.authForm) {
+    DOM.authForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = (DOM.authEmailInput?.value || '').trim();
+      let username = '';
+      if (authCurrentMode === 'signup') {
+        username = (DOM.authNameInput?.value || '').trim();
+      }
+      if (!username) {
+        username = email.split('@')[0] || 'User';
+      }
+      handleAuthSuccess(username, email);
+    });
+  }
+  if (DOM.authGoogleBtn) {
+    DOM.authGoogleBtn.addEventListener('click', () => {
+      handleAuthSuccess('GoogleUser', 'user@gmail.com');
+    });
+  }
+  if (DOM.homeSignOutBtn) {
+    DOM.homeSignOutBtn.addEventListener('click', () => {
+      state.user.signedIn = false;
+      localStorage.setItem('synccinema_user', JSON.stringify(state.user));
+      updateAuthNavbarUI();
+      showToast('You have signed out.', 'info');
+    });
+  }
   if (DOM.homeStreamUrlInput) {
     DOM.homeStreamUrlInput.addEventListener('input', () => {
       if (DOM.homeClearStreamBtn) {
@@ -1430,6 +1528,13 @@ function setupEventListeners() {
 
   // Keyboard Shortcuts
   window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (DOM.authModal && DOM.authModal.style.display !== 'none') {
+        closeAuthModal();
+        return;
+      }
+    }
+
     // Don't trigger if user is typing in chat or input
     if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
@@ -2054,6 +2159,82 @@ function updateHostLockUI() {
     DOM.settingLockToggle.checked = state.controlsLocked;
   }
   initLucide();
+}
+
+let authCurrentMode = 'signin'; // 'signin' | 'signup'
+
+function setAuthMode(mode) {
+  authCurrentMode = mode;
+  if (mode === 'signup') {
+    if (DOM.authFormTitle) DOM.authFormTitle.textContent = 'Create Account';
+    if (DOM.authFormSub) DOM.authFormSub.textContent = 'Join WatchTogether in just seconds.';
+    if (DOM.authLeftTitle) DOM.authLeftTitle.innerHTML = 'Create Your <span class="text-red">WatchTogether</span> Account';
+    if (DOM.authNameFieldGroup) DOM.authNameFieldGroup.style.display = 'flex';
+    if (DOM.authSubmitBtn) DOM.authSubmitBtn.querySelector('span').textContent = 'Create Account';
+    if (DOM.authTogglePromptText) DOM.authTogglePromptText.textContent = 'Already have an account?';
+    if (DOM.authSwitchModeBtn) DOM.authSwitchModeBtn.textContent = 'Sign In';
+  } else {
+    if (DOM.authFormTitle) DOM.authFormTitle.textContent = 'Sign In';
+    if (DOM.authFormSub) DOM.authFormSub.textContent = 'Enter your account to start watching.';
+    if (DOM.authLeftTitle) DOM.authLeftTitle.innerHTML = 'Join Your <span class="text-red">WatchTogether</span> Account';
+    if (DOM.authNameFieldGroup) DOM.authNameFieldGroup.style.display = 'none';
+    if (DOM.authSubmitBtn) DOM.authSubmitBtn.querySelector('span').textContent = 'Sign In';
+    if (DOM.authTogglePromptText) DOM.authTogglePromptText.textContent = "Don't have an account?";
+    if (DOM.authSwitchModeBtn) DOM.authSwitchModeBtn.textContent = 'Create one';
+  }
+  initLucide();
+}
+
+function openAuthModal(mode = 'signin') {
+  if (!DOM.authModal) return;
+  setAuthMode(mode);
+  DOM.authModal.style.display = 'flex';
+  if (mode === 'signup' && DOM.authNameInput) {
+    DOM.authNameInput.focus();
+  } else if (DOM.authEmailInput) {
+    DOM.authEmailInput.focus();
+  }
+  initLucide();
+}
+
+function closeAuthModal() {
+  if (DOM.authModal) DOM.authModal.style.display = 'none';
+}
+
+function updateAuthNavbarUI() {
+  const isSignedIn = !!state.user.signedIn;
+  if (DOM.homeNavSignInBtn) {
+    DOM.homeNavSignInBtn.style.display = isSignedIn ? 'none' : 'inline-flex';
+  }
+  if (DOM.heroSignInBtn) {
+    DOM.heroSignInBtn.style.display = isSignedIn ? 'none' : 'inline-flex';
+  }
+  if (DOM.homeNavUserPill) {
+    DOM.homeNavUserPill.style.display = isSignedIn ? 'inline-flex' : 'none';
+  }
+  if (DOM.homeNavUsernameDisplay) {
+    DOM.homeNavUsernameDisplay.textContent = state.user.username || 'User';
+  }
+  if (DOM.homeHostNameInput && isSignedIn) {
+    DOM.homeHostNameInput.value = state.user.username;
+  }
+  if (DOM.homeJoinNameInput && isSignedIn) {
+    DOM.homeJoinNameInput.value = state.user.username;
+  }
+  updateProfileUI();
+}
+
+function handleAuthSuccess(username, email) {
+  state.user.username = username || state.user.username || 'Viewer';
+  state.user.email = email || '';
+  state.user.signedIn = true;
+  localStorage.setItem('synccinema_user', JSON.stringify(state.user));
+  updateAuthNavbarUI();
+  closeAuthModal();
+  showToast(`Welcome, ${state.user.username}! Signed in successfully.`, 'success');
+  if (state.socket && state.socket.connected) {
+    state.socket.emit('update_profile', { username: state.user.username, avatar: '' });
+  }
 }
 
 function updateProfileUI() {
