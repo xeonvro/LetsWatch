@@ -1052,7 +1052,28 @@ function setupEventListeners() {
     });
   }
 
-  // Stream URL clear button on home
+  // WatchTogether Hero and Header Action Buttons
+  const scrollToSetup = (mode) => {
+    if (mode === 'create') {
+      if (DOM.homeTabCreateBtn) DOM.homeTabCreateBtn.click();
+      if (DOM.homeHostNameInput) DOM.homeHostNameInput.focus();
+    } else {
+      if (DOM.homeTabWatchBtn) DOM.homeTabWatchBtn.click();
+      if (DOM.homeJoinCodeInput) DOM.homeJoinCodeInput.focus();
+    }
+    const hub = document.getElementById('homeHubCard');
+    if (hub) hub.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const heroCreate = document.getElementById('heroCreateBtn');
+  if (heroCreate) heroCreate.addEventListener('click', () => scrollToSetup('create'));
+  const navCreate = document.getElementById('homeNavCreateBtn');
+  if (navCreate) navCreate.addEventListener('click', () => scrollToSetup('create'));
+
+  const heroJoin = document.getElementById('heroJoinBtn');
+  if (heroJoin) heroJoin.addEventListener('click', () => scrollToSetup('watch'));
+  const navJoin = document.getElementById('homeNavJoinBtn');
+  if (navJoin) navJoin.addEventListener('click', () => scrollToSetup('watch'));
   if (DOM.homeStreamUrlInput) {
     DOM.homeStreamUrlInput.addEventListener('input', () => {
       if (DOM.homeClearStreamBtn) {

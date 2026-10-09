@@ -61,76 +61,79 @@
     <div class="home-ambient-orb orb-3"></div>
     <div class="home-grid-pattern"></div>
 
-    <!-- Home Navigation Bar -->
+    <!-- Home Navigation Bar (WatchTogether Style) -->
     <header class="home-navbar">
       <div class="brand">
-        <div class="brand-emblem">
-          <i data-lucide="clapperboard" class="w-4 h-4 text-amber-400"></i>
-        </div>
         <div class="brand-text-col">
           <div class="brand-title-row">
-            <span class="brand-main">File2Link</span>
-            <span class="brand-badge-live">CINEMA</span>
+            <span class="brand-main">Watch<span class="brand-red-dot">.</span></span>
           </div>
-          <span class="brand-sub">by XeonModz</span>
+          <span class="brand-sub">Together</span>
         </div>
       </div>
       <div class="home-nav-right">
-        <a href="#activeRoomsCard" class="home-active-rooms-chip" id="homeActiveRoomsChip">
-          <span class="radar-beacon">
-            <span class="radar-ping"></span>
-            <span class="radar-dot"></span>
-          </span>
-          <span>Active Parties: <strong id="homeActiveCount">0</strong></span>
-        </a>
+        <button type="button" class="btn-nav-ghost" id="homeNavJoinBtn">Join Room</button>
+        <button type="button" class="btn-nav-primary-pill" id="homeNavCreateBtn">
+          <span>Get Started</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </button>
       </div>
     </header>
 
-    <!-- Hero Section: Two-Column Grid -->
-    <section class="home-hero-section">
+    <!-- WatchTogether Hero Section -->
+    <section class="watch-hero-section">
+      <div class="watch-hero-center">
+        <!-- Giant Title with Red Dot -->
+        <h1 class="watch-hero-title">
+          Watch<span class="brand-red-dot">.</span>
+        </h1>
 
-      <!-- LEFT: Hero Copy + 3-Step Guide -->
-      <div class="home-hero-left">
-        <div class="hero-header-stack">
-          <div class="hero-badge-tag">
-            <span class="hero-badge-spark"></span>
-            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-            <span>Real-Time Millisecond Cinema Sync</span>
-          </div>
-          <h1 class="home-hero-title">
-            Watch Movies Together<br>
-            <span class="hero-title-accent">In Seamless Lockstep</span>
-          </h1>
-          <p class="home-hero-sub">
-            Synchronize direct video files, HLS live feeds, and YouTube streams with friends anywhere in the world. Instant room creation, 1-click invite sharing, and zero latency drift.
-          </p>
+        <!-- Subtitle -->
+        <h2 class="watch-hero-tagline">
+          Watch. Chat. React. Together in real time.
+        </h2>
+
+        <!-- Paragraph Description -->
+        <p class="watch-hero-desc">
+          Watch lets you host live watch parties with friends using ultra-low latency screen sharing and real-time chat all directly in your browser.
+        </p>
+
+        <!-- Category Tags -->
+        <div class="watch-category-tags">
+          <span class="category-tag"><i data-lucide="film" class="w-3.5 h-3.5 text-rose-400"></i> Movies</span>
+          <span class="category-tag"><i data-lucide="gamepad-2" class="w-3.5 h-3.5 text-indigo-400"></i> Games</span>
+          <span class="category-tag"><i data-lucide="tv" class="w-3.5 h-3.5 text-cyan-400"></i> Videos</span>
+          <span class="category-tag"><i data-lucide="message-square" class="w-3.5 h-3.5 text-amber-400"></i> Chat</span>
         </div>
 
-        <!-- 3-Step Guide -->
-        <div class="home-steps-grid">
-          <div class="step-card">
-            <div class="step-num">01</div>
-            <div class="step-icon-wrap icon-amber"><i data-lucide="plus-circle" class="w-4 h-4 text-amber-400"></i></div>
-            <h3 class="step-title">Paste Video URL</h3>
-            <p class="step-desc">Paste any direct MP4, HLS (.m3u8), or YouTube stream link.</p>
-          </div>
-          <div class="step-card">
-            <div class="step-num">02</div>
-            <div class="step-icon-wrap icon-indigo"><i data-lucide="share-2" class="w-4 h-4 text-indigo-400"></i></div>
-            <h3 class="step-title">Share Room Code</h3>
-            <p class="step-desc">Send the 1-click invite link or room code to friends.</p>
-          </div>
-          <div class="step-card">
-            <div class="step-num">03</div>
-            <div class="step-icon-wrap icon-emerald"><i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i></div>
-            <h3 class="step-title">Watch in Sync</h3>
-            <p class="step-desc">Play, pause &amp; seek in millisecond sync with real-time room chat.</p>
-          </div>
+        <p class="watch-hero-subtag">
+          No downloads. No delays. Just togetherness.
+        </p>
+
+        <!-- Live Status Counter Pill -->
+        <div class="watch-live-counter-pill" id="homeActiveRoomsChip">
+          <span class="live-status-dot"></span>
+          <span class="live-status-label">LIVE NOW</span>
+          <span class="live-counter-sep"></span>
+          <span class="live-stat-item"><i data-lucide="users" class="w-3.5 h-3.5"></i> <strong id="homeHeroLiveUsers">876</strong> PEOPLE</span>
+          <span class="live-counter-sep"></span>
+          <span class="live-stat-item"><i data-lucide="radio" class="w-3.5 h-3.5"></i> <strong id="homeActiveCount">0</strong> ROOMS</span>
+        </div>
+
+        <!-- 2 Main Hero Call to Actions -->
+        <div class="watch-hero-cta-group">
+          <button type="button" class="btn-watch-red-pill" id="heroCreateBtn">
+            <span>Get Started</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+          <button type="button" class="btn-watch-dark-pill" id="heroJoinBtn">
+            <span>Join Room</span>
+          </button>
         </div>
       </div>
 
-      <!-- RIGHT: Action Hub Card -->
-      <div class="home-hub-card">
+      <!-- Action Hub Card (Watch Setup) -->
+      <div class="home-hub-card" id="homeHubCard">
         <!-- Segmented Mode Switcher -->
         <div class="hub-tabs-row">
           <button type="button" class="hub-tab-btn active" id="homeTabCreateBtn">
@@ -145,7 +148,6 @@
 
         <!-- PANEL 1: CREATE A ROOM -->
         <form id="homeCreateForm" class="hub-panel-view active">
-
           <!-- Display Name -->
           <div class="hub-field-group">
             <label for="homeHostNameInput" class="hub-field-label">Your Nickname</label>
@@ -181,7 +183,7 @@
             </div>
           </div>
 
-          <!-- Room Code (Fixed layout with spacious code display and balanced button grid) -->
+          <!-- Room Code -->
           <div class="hub-code-box">
             <div class="hub-code-header">
               <div class="code-title-group">
@@ -266,6 +268,34 @@
       </div>
     </section>
 
+    <!-- How It Works Section (WatchTogether 3-Card Grid) -->
+    <section class="how-it-works-section">
+      <h2 class="how-it-works-heading">How It Works</h2>
+      <div class="how-it-works-grid">
+        <div class="hiw-card">
+          <div class="hiw-icon-wrap icon-blue">
+            <i data-lucide="monitor" class="w-5 h-5 text-blue-400"></i>
+          </div>
+          <h3 class="hiw-title">1. Create a Room</h3>
+          <p class="hiw-desc">Start a watch party in one click. We'll generate a secure room code and invite link for you.</p>
+        </div>
+        <div class="hiw-card">
+          <div class="hiw-icon-wrap icon-red">
+            <i data-lucide="cast" class="w-5 h-5 text-rose-400"></i>
+          </div>
+          <h3 class="hiw-title">2. Choose Your Media</h3>
+          <p class="hiw-desc">Paste any direct MP4, HLS (.m3u8), or YouTube stream link to load it seamlessly in your browser.</p>
+        </div>
+        <div class="hiw-card">
+          <div class="hiw-icon-wrap icon-green">
+            <i data-lucide="users" class="w-5 h-5 text-emerald-400"></i>
+          </div>
+          <h3 class="hiw-title">3. Watch &amp; Chat Together</h3>
+          <p class="hiw-desc">Friends join instantly. Real-time play, pause, seek sync, live audio, and chat in total lockstep.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Active Rooms Section -->
     <div class="home-active-rooms-card" id="activeRoomsCard">
       <div class="home-active-rooms-inner">
@@ -300,15 +330,11 @@
         </button>
 
         <div class="brand">
-          <div class="brand-emblem">
-            <i data-lucide="clapperboard" class="w-4 h-4 text-amber-400"></i>
-          </div>
           <div class="brand-text-col">
             <div class="brand-title-row">
-              <span class="brand-main">File2Link</span>
-              <span class="brand-badge-live">CINEMA</span>
+              <span class="brand-main">Watch<span class="brand-red-dot">.</span></span>
             </div>
-            <span class="brand-sub">by XeonModz</span>
+            <span class="brand-sub">Together</span>
           </div>
         </div>
 
