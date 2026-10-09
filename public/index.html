@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Watch Bethlehem Kudumba Unit (2026) Malayalam HQ HDRip - 1080p - x.mkv — File2Link</title>
+  <title>File2Link — Watch Movies &amp; Streams Together in Real-Time Sync</title>
   <meta name="description" content="Watch video streams synchronously with friends in real-time. Full sync for play, pause, seek, and fast-forward powered by WebSockets.">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -55,17 +55,33 @@
        HOME PAGE (Lobby / Landing View)
        ====================================================================== -->
   <div class="home-page-container" id="homePageContainer">
+    <!-- Ambient Backdrop Effects -->
+    <div class="home-ambient-orb orb-1"></div>
+    <div class="home-ambient-orb orb-2"></div>
+    <div class="home-ambient-orb orb-3"></div>
+    <div class="home-grid-pattern"></div>
+
     <!-- Home Navigation Bar -->
     <header class="home-navbar">
       <div class="brand">
-        <span class="brand-gold-dot"></span>
-        <span class="brand-main">File2Link</span>
-        <span class="brand-sub">by XeonModz</span>
+        <div class="brand-emblem">
+          <i data-lucide="clapperboard" class="w-4 h-4 text-amber-400"></i>
+        </div>
+        <div class="brand-text-col">
+          <div class="brand-title-row">
+            <span class="brand-main">File2Link</span>
+            <span class="brand-badge-live">CINEMA</span>
+          </div>
+          <span class="brand-sub">by XeonModz</span>
+        </div>
       </div>
       <div class="home-nav-right">
         <a href="#activeRoomsCard" class="home-active-rooms-chip" id="homeActiveRoomsChip">
-          <span class="pulse-dot-sm"></span>
-          <span>Active Rooms: <strong id="homeActiveCount">0</strong></span>
+          <span class="radar-beacon">
+            <span class="radar-ping"></span>
+            <span class="radar-dot"></span>
+          </span>
+          <span>Active Parties: <strong id="homeActiveCount">0</strong></span>
         </a>
       </div>
     </header>
@@ -75,36 +91,40 @@
 
       <!-- LEFT: Hero Copy + 3-Step Guide -->
       <div class="home-hero-left">
-        <div>
+        <div class="hero-header-stack">
           <div class="hero-badge-tag">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-            <span>Real-Time Synchronized Streaming</span>
+            <span class="hero-badge-spark"></span>
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Real-Time Millisecond Cinema Sync</span>
           </div>
-          <h1 class="home-hero-title">Watch Movies &amp; Streams<br>Together — In Sync</h1>
+          <h1 class="home-hero-title">
+            Watch Movies Together<br>
+            <span class="hero-title-accent">In Seamless Lockstep</span>
+          </h1>
           <p class="home-hero-sub">
-            Stream movies, video files, and live feeds in perfect millisecond sync with distant friends and loved ones. Just paste a link, share your code, and hit play together.
+            Synchronize direct video files, HLS live feeds, and YouTube streams with friends anywhere in the world. Instant room creation, zero-config mobile QR pairing, and zero latency drift.
           </p>
         </div>
 
         <!-- 3-Step Guide -->
         <div class="home-steps-grid">
           <div class="step-card">
-            <div class="step-num">1</div>
-            <div class="step-icon-wrap"><i data-lucide="plus-circle" class="w-4 h-4 text-amber-400"></i></div>
-            <h3 class="step-title">Create &amp; Paste Link</h3>
-            <p class="step-desc">Paste any MP4, HLS, or YouTube URL. A unique room code is generated instantly.</p>
+            <div class="step-num">01</div>
+            <div class="step-icon-wrap icon-amber"><i data-lucide="plus-circle" class="w-4 h-4 text-amber-400"></i></div>
+            <h3 class="step-title">Paste Video URL</h3>
+            <p class="step-desc">Paste any direct MP4, HLS (.m3u8), or YouTube stream link.</p>
           </div>
           <div class="step-card">
-            <div class="step-num">2</div>
-            <div class="step-icon-wrap"><i data-lucide="share-2" class="w-4 h-4 text-indigo-400"></i></div>
-            <h3 class="step-title">Share the Code</h3>
-            <p class="step-desc">Copy the room code or invite link and send it to your friend or partner.</p>
+            <div class="step-num">02</div>
+            <div class="step-icon-wrap icon-indigo"><i data-lucide="share-2" class="w-4 h-4 text-indigo-400"></i></div>
+            <h3 class="step-title">Share Room Code</h3>
+            <p class="step-desc">Send the 1-click invite link or let phones scan the instant live QR code.</p>
           </div>
           <div class="step-card">
-            <div class="step-num">3</div>
-            <div class="step-icon-wrap"><i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i></div>
-            <h3 class="step-title">Watch in Perfect Sync</h3>
-            <p class="step-desc">Play, pause, seek — all synced in real-time. No delays, no desync.</p>
+            <div class="step-num">03</div>
+            <div class="step-icon-wrap icon-emerald"><i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i></div>
+            <h3 class="step-title">Watch in Sync</h3>
+            <p class="step-desc">Play, pause &amp; seek in millisecond sync with real-time room chat.</p>
           </div>
         </div>
       </div>
@@ -114,12 +134,12 @@
         <!-- Segmented Mode Switcher -->
         <div class="hub-tabs-row">
           <button type="button" class="hub-tab-btn active" id="homeTabCreateBtn">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <i data-lucide="play" class="w-4 h-4"></i>
             <span>Start Stream</span>
           </button>
           <button type="button" class="hub-tab-btn" id="homeTabWatchBtn">
             <i data-lucide="tv" class="w-4 h-4"></i>
-            <span>Watch Stream</span>
+            <span>Join Room</span>
           </button>
         </div>
 
@@ -139,7 +159,7 @@
           <div class="hub-field-group">
             <label for="homeStreamUrlInput" class="hub-field-label">
               <span>Movie / Stream Link</span>
-              <span class="hub-label-badge">MP4 · HLS · YouTube</span>
+              <span class="hub-label-badge">MP4 · MKV · HLS · YouTube</span>
             </label>
             <div class="hub-input-wrap">
               <i data-lucide="link-2" class="w-4 h-4 hub-icon"></i>
@@ -154,53 +174,57 @@
               </button>
             </div>
             <div class="quick-samples-row">
-              <span class="samples-title">Samples:</span>
+              <span class="samples-title">Presets:</span>
               <button type="button" class="sample-chip-btn" data-url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">🐰 Big Buck Bunny</button>
               <button type="button" class="sample-chip-btn" data-url="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8">⚡ HLS Stream</button>
               <button type="button" class="sample-chip-btn" data-url="https://www.youtube.com/watch?v=dQw4w9WgXcQ">▶️ YouTube</button>
             </div>
           </div>
 
-          <!-- Room Code -->
+          <!-- Room Code (Fixed layout with spacious code display and balanced button grid) -->
           <div class="hub-code-box">
             <div class="hub-code-header">
               <div class="code-title-group">
-                <i data-lucide="key" class="w-3.5 h-3.5 text-amber-400"></i>
+                <i data-lucide="key" class="w-4 h-4 text-amber-400"></i>
                 <span class="hub-code-title">Your Room Code</span>
               </div>
-              <button type="button" class="btn-reroll-code" id="homeRerollCodeBtn">
+              <button type="button" class="btn-reroll-code" id="homeRerollCodeBtn" title="Generate New Room Code">
                 <i data-lucide="dices" class="w-3.5 h-3.5"></i>
                 <span>New Code</span>
               </button>
             </div>
 
-            <div class="code-display-row">
-              <div class="code-token-badge" id="homeDisplayRoomCode">cinema-7821</div>
-              <div class="code-actions-group">
-                <button type="button" class="btn-code-copy" id="homeCopyCodeBtn">
-                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                  <span id="homeCopyCodeText">Copy Code</span>
-                </button>
-                <button type="button" class="btn-link-copy" id="homeCopyLinkBtn">
-                  <i data-lucide="link" class="w-3.5 h-3.5"></i>
-                  <span id="homeCopyLinkText">Copy Link</span>
-                </button>
-                <button type="button" class="btn-qr-scan" id="homeScanQrBtn" title="Scan with Phone Camera to Join">
-                  <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
-                  <span>Phone QR</span>
-                </button>
-              </div>
+            <!-- Prominent Full-Width Room Code Display -->
+            <div class="code-badge-hero">
+              <div class="code-token-badge" id="homeDisplayRoomCode" title="Click to copy room code">cinema-7821</div>
+              <span class="code-badge-copy-hint"><i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i> Room Key</span>
+            </div>
+
+            <!-- Balanced 3-Button Action Grid -->
+            <div class="code-actions-grid">
+              <button type="button" class="btn-code-copy" id="homeCopyCodeBtn" title="Copy Room Code">
+                <i data-lucide="copy" class="w-4 h-4"></i>
+                <span id="homeCopyCodeText">Copy Code</span>
+              </button>
+              <button type="button" class="btn-link-copy" id="homeCopyLinkBtn" title="Copy Invite Link">
+                <i data-lucide="link" class="w-4 h-4"></i>
+                <span id="homeCopyLinkText">Copy Link</span>
+              </button>
+              <button type="button" class="btn-qr-scan" id="homeScanQrBtn" title="Scan with Phone Camera to Join">
+                <i data-lucide="qr-code" class="w-4 h-4"></i>
+                <span>Phone QR</span>
+              </button>
             </div>
 
             <div class="share-url-preview-row">
-              <span class="preview-label" id="homeShareUrlLabel">Phone / LAN Link:</span>
+              <span class="preview-label" id="homeShareUrlLabel">LAN / Phone:</span>
               <input type="text" id="homeShareUrlPreview" readonly />
             </div>
           </div>
 
           <button type="submit" class="btn-create-submit" id="homeCreateSubmitBtn">
             <i data-lucide="play-circle" class="w-5 h-5"></i>
-            <span>Create Room &amp; Start Stream</span>
+            <span>Create Room &amp; Start Cinema</span>
           </button>
         </form>
 
@@ -233,10 +257,10 @@
             </div>
           </div>
 
-          <p class="code-instruction-text">
-            <i data-lucide="info" class="w-3.5 h-3.5 text-cyan-400"></i>
-            Enter the code from your friend to join their watch party in 100% real-time sync!
-          </p>
+          <div class="join-info-card">
+            <i data-lucide="info" class="w-4 h-4 text-cyan-400 flex-shrink-0"></i>
+            <span>Enter the code shared by your friend to join their watch party in 100% real-time sync!</span>
+          </div>
 
           <button type="submit" class="btn-watch-submit-hero" id="homeWatchSubmitBtn">
             <i data-lucide="tv" class="w-5 h-5"></i>
@@ -251,7 +275,10 @@
       <div class="home-active-rooms-inner">
         <div class="active-rooms-header">
           <div class="rooms-title-group">
-            <i data-lucide="radio" class="w-4 h-4 text-emerald-400"></i>
+            <span class="radar-beacon">
+              <span class="radar-ping"></span>
+              <span class="radar-dot"></span>
+            </span>
             <span>Live Active Watch Parties</span>
           </div>
           <button type="button" class="btn-refresh-rooms" id="homeRefreshRoomsBtn">
@@ -277,9 +304,16 @@
         </button>
 
         <div class="brand">
-          <span class="brand-gold-dot"></span>
-          <span class="brand-main">File2Link</span>
-          <span class="brand-sub">by XeonModz</span>
+          <div class="brand-emblem">
+            <i data-lucide="clapperboard" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <div class="brand-text-col">
+            <div class="brand-title-row">
+              <span class="brand-main">File2Link</span>
+              <span class="brand-badge-live">CINEMA</span>
+            </div>
+            <span class="brand-sub">by XeonModz</span>
+          </div>
         </div>
 
         <!-- Room Selector & Start Party Trigger -->

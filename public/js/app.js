@@ -351,7 +351,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Pre-fill the Home Page stream URL and generate a fresh room code
   const freshCode = generateRandomRoomCode();
-  if (DOM.homeStreamUrlInput) DOM.homeStreamUrlInput.value = BETHLEHEM_URL;
+  if (DOM.homeStreamUrlInput) {
+    DOM.homeStreamUrlInput.value = BETHLEHEM_URL;
+    if (DOM.homeClearStreamBtn) DOM.homeClearStreamBtn.style.display = 'flex';
+  }
   if (DOM.homeDisplayRoomCode) DOM.homeDisplayRoomCode.textContent = freshCode;
   if (DOM.homeShareUrlPreview) DOM.homeShareUrlPreview.value = `${window.location.origin}/?room=${freshCode}`;
   if (DOM.homeHostNameInput && storedUser) {
@@ -1090,7 +1093,14 @@ function setupEventListeners() {
     });
   }
 
-  // Copy Room Code button
+  // Copy Room Code button & direct click on badge
+  if (DOM.homeDisplayRoomCode) {
+    DOM.homeDisplayRoomCode.style.cursor = 'pointer';
+    DOM.homeDisplayRoomCode.addEventListener('click', () => {
+      if (DOM.homeCopyCodeBtn) DOM.homeCopyCodeBtn.click();
+    });
+  }
+
   if (DOM.homeCopyCodeBtn) {
     DOM.homeCopyCodeBtn.addEventListener('click', () => {
       const code = DOM.homeDisplayRoomCode?.textContent || '';
