@@ -891,12 +891,17 @@
   <!-- Room Code Manager & Room Switcher Modal -->
   <div class="modal-backdrop" id="roomManagerModal" style="display: none;">
     <div class="modal-glass-card room-manager-card">
+      <!-- Close Button Top Right -->
+      <button type="button" class="btn-close-modal" id="closeRoomManagerModalBtn" title="Close">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
       <div class="modal-header">
         <div class="modal-brand">
           <div class="brand-icon"><i data-lucide="key" class="w-5 h-5 text-amber-400"></i></div>
           <h2>Watch Party Room Code</h2>
         </div>
-        <p class="modal-sub">Share code or enter another room code to watch together</p>
+        <p class="modal-sub">Share code or switch to another room to watch together</p>
       </div>
 
       <!-- Current Active Room Card -->
@@ -905,24 +910,38 @@
           <span class="active-room-tag">ACTIVE ROOM</span>
           <span class="active-room-sync-status">⚡ Real-time Synced</span>
         </div>
-        <div class="active-room-code-row">
-          <div class="room-code-display" id="activeRoomCodeDisplay">cinema-lounge</div>
-          <button type="button" class="btn-primary-sm" id="copyActiveRoomCodeBtn" title="Copy Room Code">
-            <i data-lucide="copy" class="w-4 h-4"></i>
+
+        <!-- Spacious Room Code Hero Display -->
+        <div class="active-room-code-badge">
+          <div class="room-code-display" id="activeRoomCodeDisplay" title="Click to copy room code">cinema-lounge</div>
+          <span class="active-code-hint"><i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i> Room Key</span>
+        </div>
+
+        <!-- 3 Balanced Action Buttons Grid -->
+        <div class="active-room-actions-grid">
+          <button type="button" class="btn-modal-action btn-action-copy-code" id="copyActiveRoomCodeBtn" title="Copy Room Code">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
             <span>Copy Code</span>
           </button>
-        </div>
-        <div class="active-room-url-row">
-          <input type="text" id="activeRoomShareUrlInput" readonly title="Share this link with phone / friends on the same Wi-Fi" />
-          <button type="button" class="btn-copy-url" id="copyActiveRoomShareUrlBtn">Copy Link</button>
-          <button type="button" class="btn-copy-url" id="openQrFromRoomManagerBtn" style="background: rgba(139, 92, 246, 0.2); border-color: rgba(139, 92, 246, 0.4); color: #c4b5fd;">
+          <button type="button" class="btn-modal-action btn-action-copy-link" id="copyActiveRoomShareUrlBtn" title="Copy Invite Link">
+            <i data-lucide="link" class="w-3.5 h-3.5"></i>
+            <span>Copy Link</span>
+          </button>
+          <button type="button" class="btn-modal-action btn-action-qr" id="openQrFromRoomManagerBtn" title="Scan QR Code with Phone">
             <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
             <span>Scan QR</span>
           </button>
         </div>
-        <p style="font-size: 0.72rem; color: #94a3b8; margin: 0.35rem 0 0 0; display: flex; align-items: center; gap: 0.35rem;">
+
+        <!-- URL Preview Bar -->
+        <div class="active-room-url-preview">
+          <span class="url-preview-tag">URL:</span>
+          <input type="text" id="activeRoomShareUrlInput" readonly title="Share this link with phone / friends on the same Wi-Fi" />
+        </div>
+
+        <p class="active-room-wifi-tip">
           <i data-lucide="wifi" class="w-3.5 h-3.5 text-cyan-400"></i>
-          <span>Works on all phones, tablets, and PCs on the same Wi-Fi.</span>
+          <span>Works on all phones, tablets, and PCs on the same Wi-Fi network.</span>
         </p>
       </div>
 
@@ -934,15 +953,15 @@
       <form id="switchRoomForm" class="switch-room-form">
         <div class="form-section">
           <div class="label-with-action">
-            <label for="switchRoomCodeInput">Enter Room Code to Join</label>
+            <label for="switchRoomCodeInput" class="switch-field-label">Enter Room Code to Join</label>
             <button type="button" class="btn-text-link" id="generateNewSwitchCodeBtn">
               <i data-lucide="dices" class="w-3.5 h-3.5"></i>
               <span>Generate New Code</span>
             </button>
           </div>
           <div class="input-with-action-group">
-            <div class="input-with-icon flex-1">
-              <i data-lucide="hash" class="w-4 h-4 text-slate-400"></i>
+            <div class="input-with-icon">
+              <i data-lucide="hash" class="w-4 h-4 text-indigo-400"></i>
               <input type="text" id="switchRoomCodeInput" placeholder="Type or paste room code..." maxlength="30" required>
             </div>
             <button type="submit" class="btn-primary" id="submitSwitchRoomBtn">
@@ -953,7 +972,7 @@
         </div>
       </form>
 
-      <button type="button" class="btn-secondary" id="closeRoomManagerModalBtn" style="width: 100%; justify-content: center; margin-top: 0.5rem;">
+      <button type="button" class="btn-secondary" id="closeRoomManagerModalBottomBtn" style="width: 100%; justify-content: center;">
         <span>Close</span>
       </button>
     </div>

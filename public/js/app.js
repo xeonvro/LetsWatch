@@ -1487,6 +1487,13 @@ function setupEventListeners() {
   }
 
   // Room Manager Modal Actions
+  if (DOM.activeRoomCodeDisplay) {
+    DOM.activeRoomCodeDisplay.style.cursor = 'pointer';
+    DOM.activeRoomCodeDisplay.addEventListener('click', () => {
+      if (DOM.copyActiveRoomCodeBtn) DOM.copyActiveRoomCodeBtn.click();
+    });
+  }
+
   if (DOM.copyActiveRoomCodeBtn) {
     DOM.copyActiveRoomCodeBtn.addEventListener('click', () => {
       navigator.clipboard.writeText(state.roomId).then(() => {
@@ -1523,11 +1530,12 @@ function setupEventListeners() {
     });
   }
 
-  if (DOM.closeRoomManagerModalBtn) {
-    DOM.closeRoomManagerModalBtn.addEventListener('click', () => {
-      DOM.roomManagerModal.style.display = 'none';
-    });
-  }
+  const closeRoomManager = () => {
+    if (DOM.roomManagerModal) DOM.roomManagerModal.style.display = 'none';
+  };
+  if (DOM.closeRoomManagerModalBtn) DOM.closeRoomManagerModalBtn.addEventListener('click', closeRoomManager);
+  const bottomCloseRoomBtn = document.getElementById('closeRoomManagerModalBottomBtn');
+  if (bottomCloseRoomBtn) bottomCloseRoomBtn.addEventListener('click', closeRoomManager);
 
   // Connect Phone / QR Code Modal
   if (DOM.dropdownConnectPhoneBtn) {
