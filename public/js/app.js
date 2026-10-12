@@ -1654,10 +1654,14 @@ function setupEventListeners() {
   });
 
   // Devices Dropdown Toggle
-  DOM.devicesBadgeBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
+  function toggleDevicesDropdown(e) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     DOM.devicesDropdown.classList.toggle('open');
-  });
+  }
+  DOM.devicesBadgeBtn.addEventListener('click', toggleDevicesDropdown);
 
   // Room Code & Invite Link Triggers
   if (DOM.openWelcomeHubBtn) DOM.openWelcomeHubBtn.addEventListener('click', () => openJoinModal(false));
@@ -2079,7 +2083,7 @@ function setupEventListeners() {
   function closeAllDropdowns(e) {
     const targetEl = (e && e.target instanceof Element) ? e.target : (e?.target?.parentElement instanceof Element ? e.target.parentElement : null);
     if (targetEl) {
-      if (!targetEl.closest('.devices-indicator-container') && DOM.devicesDropdown) {
+      if (!targetEl.closest('.devices-indicator-container') && !targetEl.closest('.devices-dropdown') && DOM.devicesDropdown) {
         DOM.devicesDropdown.classList.remove('open');
       }
       if (!targetEl.closest('.preset-dropdown-container') && DOM.presetDropdownMenu) {
@@ -2092,7 +2096,13 @@ function setupEventListeners() {
   }
 
   document.addEventListener('click', closeAllDropdowns);
-  document.addEventListener('touchstart', closeAllDropdowns, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    // Only close if target was truly outside
+    const targetEl = (e && e.target instanceof Element) ? e.target : null;
+    if (targetEl && !targetEl.closest('.devices-indicator-container') && !targetEl.closest('.devices-dropdown')) {
+      if (DOM.devicesDropdown) DOM.devicesDropdown.classList.remove('open');
+    }
+  }, { passive: true });
 }
 
 function broadcastNewStreamFromInput() {
