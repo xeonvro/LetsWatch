@@ -27,11 +27,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 // In-memory room storage
 const rooms = new Map();
 
-// Default demo streams available
+// Default stream state when no stream is loaded
 const DEFAULT_STREAM = {
-  url: 'https://xeonmodz.koyeb.app/stream/691?hash=923b67',
+  url: '',
   videoType: 'html5',
-  title: 'Bethlehem Kudumba Unit (2026) Malayalam HQ HDRip - 1080p - x.mkv',
+  title: 'No Stream Loaded',
   isPlaying: false,
   currentTime: 0,
   playbackRate: 1.0,
@@ -414,6 +414,19 @@ io.on('connection', (socket) => {
     if (room.chatHistory.length > 100) room.chatHistory.shift();
 
     io.to(currentRoomId).emit('chat_message', chatMsg);
+  });
+
+  // User typing status
+  socket.on('user_typing', ({ isTyping }) => {
+    if (!currentRoomId || !rooms.has(currentRoomId)) return;
+    const room = rooms.get(currentRoomId);
+    const user = room.users.get(socket.id);
+    if (!user) return;
+    socket.to(currentRoomId).emit('user_typing', {
+      userId: socket.id,
+      username: user.username,
+      isTyping: !!isTyping
+    });
   });
 
   // Live Floating Reaction

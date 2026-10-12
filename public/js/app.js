@@ -18,6 +18,7 @@ const state = {
   },
   isHost: false,
   controlsLocked: false,
+  isBuffering: false,
   activePlayerType: 'html5', // 'html5' | 'hls' | 'youtube'
   hlsInstance: null,
   ytPlayer: null,
@@ -131,8 +132,6 @@ const DOM = {
   mobileLanUrlInput: document.getElementById('mobileLanUrlInput'),
   copyMobileLanUrlBtn: document.getElementById('copyMobileLanUrlBtn'),
   closeMobileModalBtn: document.getElementById('closeMobileModalBtn'),
-  mobileUnmuteOverlay: document.getElementById('mobileUnmuteOverlay'),
-  mobileUnmuteBtn: document.getElementById('mobileUnmuteBtn'),
 
   // Room Manager & Switcher Modal
   dropdownRoomCodeBtn: document.getElementById('dropdownRoomCodeBtn'),
@@ -203,6 +202,9 @@ const DOM = {
   ctrlPipBtn: document.getElementById('ctrlPipBtn'),
   ctrlFullscreenBtn: document.getElementById('ctrlFullscreenBtn'),
   fullscreenIcon: document.getElementById('fullscreenIcon'),
+  ctrlMoreBtn: document.getElementById('ctrlMoreBtn'),
+  moreOptionsMenu: document.getElementById('moreOptionsMenu'),
+  moreOptPip: document.getElementById('moreOptPip'),
 
   // Video Meta & Reactions
   displayStreamType: document.getElementById('displayStreamType'),
@@ -211,6 +213,13 @@ const DOM = {
 
   // Sidebar & Tabs
   partySidebar: document.getElementById('partySidebar'),
+  closeSidebarBtn: document.getElementById('closeSidebarBtn'),
+  sidebarBackdrop: document.getElementById('sidebarBackdrop'),
+  floatingChatBtn: document.getElementById('floatingChatBtn'),
+  floatingChatDot: document.getElementById('floatingChatDot'),
+  chatOnlineCount: document.getElementById('chatOnlineCount'),
+  chatTypingIndicator: document.getElementById('chatTypingIndicator'),
+  chatTypingText: document.getElementById('chatTypingText'),
   appLayout: document.getElementById('appLayout'),
   sideDeviceCount: document.getElementById('sideDeviceCount'),
   tabDeviceCount: document.getElementById('tabDeviceCount'),
@@ -330,33 +339,17 @@ function fetchNetworkInfo() {
         const currentCode = DOM.homeDisplayRoomCode ? DOM.homeDisplayRoomCode.textContent : state.roomId;
         updateHomePageRoomCode(currentCode);
       }
-      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      if (DOM.homeShareUrlLabel) {
-        DOM.homeShareUrlLabel.textContent = isLocalhost ? 'Phone / LAN Link:' : 'Party Invite Link:';
-      }
       return state.network;
     })
     .catch(() => state.network);
 }
 
 function getBestShareUrl(roomId = state.roomId) {
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  // If hosted on Render or any public cloud/domain, always use current public origin
-  if (!isLocalhost) {
-    return `${window.location.origin}/?room=${roomId}`;
-  }
-  // If testing on local PC, share LAN IP so phones on the same Wi-Fi can join
-  if (state.network.recommendedUrl && !state.network.isCloud) {
-    return `${state.network.recommendedUrl}/?room=${roomId}`;
-  }
   return `${window.location.origin}/?room=${roomId}`;
 }
 
 // --- Initialize Application ---
 document.addEventListener('DOMContentLoaded', () => {
-  const BETHLEHEM_URL = 'https://xeonmodz.koyeb.app/stream/691?hash=923b67';
-  const BETHLEHEM_TITLE = 'Bethlehem Kudumba Unit (2026) Malayalam HQ HDRip - 1080p - x.mkv';
-
   // Immediately resolve local network IP for mobile & device syncing
   fetchNetworkInfo();
 
@@ -379,11 +372,11 @@ document.addEventListener('DOMContentLoaded', () => {
     state.user.signedIn = false;
   }
 
-  // Pre-fill the Home Page stream URL and generate a fresh room code
+  // Generate a fresh room code
   const freshCode = generateRandomRoomCode();
   if (DOM.homeStreamUrlInput) {
-    DOM.homeStreamUrlInput.value = BETHLEHEM_URL;
-    if (DOM.homeClearStreamBtn) DOM.homeClearStreamBtn.style.display = 'flex';
+    DOM.homeStreamUrlInput.value = '';
+    if (DOM.homeClearStreamBtn) DOM.homeClearStreamBtn.style.display = 'none';
   }
   if (DOM.homeDisplayRoomCode) DOM.homeDisplayRoomCode.textContent = freshCode;
   if (DOM.homeShareUrlPreview) DOM.homeShareUrlPreview.value = `${window.location.origin}/?room=${freshCode}`;
@@ -391,8 +384,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try { DOM.homeHostNameInput.value = JSON.parse(storedUser).username || ''; } catch (e) {}
   }
 
-  // Pre-fill theater stream input too
-  if (DOM.streamUrlInput) DOM.streamUrlInput.value = BETHLEHEM_URL;
+  // Theater stream input
+  if (DOM.streamUrlInput) DOM.streamUrlInput.value = '';
 
   // If ?room= param in URL, jump directly into theater mode
   if (roomParam) {
@@ -430,6 +423,13 @@ function enterTheaterMode(videoUrl, videoTitle) {
   if (state.socket && state.socket.connected) {
     joinCurrentRoom();
   }
+
+  // Auto-open chat sidebar on desktop screens
+  const stage = document.querySelector('.main-stage');
+  if (stage && window.innerWidth >= 1024) {
+    stage.classList.add('sidebar-open');
+  }
+
   initLucide();
 }
 
@@ -581,8 +581,22 @@ function initSocket() {
   // Chat message received
   state.socket.on('chat_message', (msg) => {
     appendChatMessage(msg);
-    if (msg.userId !== state.socket.id) {
-      playSound('chat');
+  });
+
+  // User Typing Status
+  let remoteTypingTimer = null;
+  state.socket.on('user_typing', (data) => {
+    if (DOM.chatTypingIndicator && DOM.chatTypingText) {
+      if (data.isTyping) {
+        DOM.chatTypingText.textContent = `${data.username} is typing...`;
+        DOM.chatTypingIndicator.style.display = 'flex';
+        clearTimeout(remoteTypingTimer);
+        remoteTypingTimer = setTimeout(() => {
+          DOM.chatTypingIndicator.style.display = 'none';
+        }, 3000);
+      } else {
+        DOM.chatTypingIndicator.style.display = 'none';
+      }
     }
   });
 
@@ -652,6 +666,19 @@ const Player = {
   },
 
   loadSource(url, videoType, initialTime = 0, autoPlay = false) {
+    if (!url) {
+      if (DOM.cinemaVideo) {
+        DOM.cinemaVideo.pause();
+        DOM.cinemaVideo.removeAttribute('src');
+        DOM.cinemaVideo.load();
+        DOM.cinemaVideo.style.display = 'block';
+      }
+      if (DOM.ytContainer) DOM.ytContainer.style.display = 'none';
+      if (DOM.displayStreamType) DOM.displayStreamType.textContent = 'STANDBY';
+      this.destroyHls();
+      return;
+    }
+
     state.activePlayerType = videoType || this.getVideoType(url);
     DOM.displayStreamType.textContent = state.activePlayerType.toUpperCase();
 
@@ -769,13 +796,9 @@ const Player = {
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
           console.warn('Playback play() was restricted by browser:', err);
-          // If browser blocked unmuted autoplay, immediately play muted to stay synced
+          // If browser blocked unmuted autoplay, attempt muted playback to preserve sync
           DOM.cinemaVideo.muted = true;
-          DOM.cinemaVideo.play().then(() => {
-            if (DOM.mobileUnmuteOverlay) DOM.mobileUnmuteOverlay.style.display = 'flex';
-          }).catch(() => {
-            if (DOM.mobileUnmuteOverlay) DOM.mobileUnmuteOverlay.style.display = 'flex';
-          });
+          DOM.cinemaVideo.play().catch(() => {});
         });
       }
     }
@@ -839,6 +862,14 @@ function extractYouTubeId(url) {
 // --- Video State Synchronization Engine ---
 function applyVideoState(videoState, isInitial = false) {
   state.isApplyingSync = true;
+
+  if (!videoState || !videoState.url) {
+    DOM.displayVideoTitle.textContent = 'No Stream Loaded';
+    updateVideoMetadataDisplays('', 'No Stream Loaded');
+    Player.loadSource('', 'html5', 0, false);
+    state.isApplyingSync = false;
+    return;
+  }
 
   const currentUrl = DOM.cinemaVideo.src;
   const isNewUrl = !currentUrl.includes(videoState.url) || isInitial;
@@ -1013,18 +1044,59 @@ DOM.cinemaVideo.addEventListener('error', () => {
 });
 
 DOM.cinemaVideo.addEventListener('waiting', () => {
+  state.isBuffering = true;
+  updatePlaybackStatusUI();
   showSyncBadge('Buffering stream...');
 });
 
-// Sync play/pause button with native video events
-DOM.cinemaVideo.addEventListener('play', () => setPlayPauseIconState(true));
-DOM.cinemaVideo.addEventListener('pause', () => setPlayPauseIconState(false));
-DOM.cinemaVideo.addEventListener('ended', () => setPlayPauseIconState(false));
+DOM.cinemaVideo.addEventListener('seeking', () => {
+  state.isBuffering = true;
+  updatePlaybackStatusUI();
+});
+
+DOM.cinemaVideo.addEventListener('seeked', () => {
+  state.isBuffering = false;
+  updatePlaybackStatusUI(!DOM.cinemaVideo.paused);
+});
+
+DOM.cinemaVideo.addEventListener('stalled', () => {
+  state.isBuffering = true;
+  updatePlaybackStatusUI();
+});
+
+DOM.cinemaVideo.addEventListener('canplay', () => {
+  state.isBuffering = false;
+  updatePlaybackStatusUI(!DOM.cinemaVideo.paused);
+});
+
+DOM.cinemaVideo.addEventListener('playing', () => {
+  state.isBuffering = false;
+  setPlayPauseIconState(true);
+  updatePlaybackStatusUI(true);
+});
+
+// Sync play/pause button and status with native video events
+DOM.cinemaVideo.addEventListener('play', () => {
+  state.isBuffering = false;
+  setPlayPauseIconState(true);
+  updatePlaybackStatusUI(true);
+});
+DOM.cinemaVideo.addEventListener('pause', () => {
+  state.isBuffering = false;
+  setPlayPauseIconState(false);
+  updatePlaybackStatusUI(false);
+});
+DOM.cinemaVideo.addEventListener('ended', () => {
+  state.isBuffering = false;
+  setPlayPauseIconState(false);
+  updatePlaybackStatusUI(false);
+});
 
 // Play / Pause Icon Toggle (inline SVG — no Lucide dependency)
 function setPlayPauseIconState(isPlaying) {
   if (DOM.iconPlay)  DOM.iconPlay.style.display  = isPlaying ? 'none' : 'block';
   if (DOM.iconPause) DOM.iconPause.style.display = isPlaying ? 'block' : 'none';
+  updatePlaybackStatusUI(isPlaying);
 }
 
 // Play / Pause UI Sync (called from Player methods)
@@ -1230,7 +1302,8 @@ function setupEventListeners() {
   // Copy Invite Link button
   if (DOM.homeCopyLinkBtn) {
     DOM.homeCopyLinkBtn.addEventListener('click', () => {
-      const url = DOM.homeShareUrlPreview?.value || window.location.href;
+      const code = (DOM.homeDisplayRoomCode?.textContent || state.roomId || '').trim();
+      const url = `${window.location.origin}/?room=${code}`;
       navigator.clipboard.writeText(url).then(() => {
         if (DOM.homeCopyLinkText) DOM.homeCopyLinkText.textContent = 'Copied!';
         setTimeout(() => { if (DOM.homeCopyLinkText) DOM.homeCopyLinkText.textContent = 'Copy Link'; }, 2000);
@@ -1250,8 +1323,8 @@ function setupEventListeners() {
       const name = (DOM.homeHostNameInput?.value || '').trim() || state.user.username;
       const code = (DOM.homeDisplayRoomCode?.textContent || generateRandomRoomCode()).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
       const url = (DOM.homeStreamUrlInput?.value || '').trim();
-      const videoType = Player.getVideoType(url);
-      const videoTitle = url ? `Stream: ${url.split('/').pop().split('?')[0] || 'Custom Stream'}` : 'Bethlehem Kudumba Unit (2026) Malayalam HQ HDRip - 1080p - x.mkv';
+      const videoType = url ? Player.getVideoType(url) : 'html5';
+      const videoTitle = url ? `Stream: ${url.split('/').pop().split('?')[0] || 'Custom Stream'}` : 'No Stream Loaded';
 
       state.user.username = name;
       state.roomId = code;
@@ -1413,6 +1486,31 @@ function setupEventListeners() {
       }).catch(() => {
         showToast(`Room link: ${shareUrl}`, 'info');
       });
+    });
+  }
+
+  // Three Dots More Options Menu
+  if (DOM.ctrlMoreBtn && DOM.moreOptionsMenu) {
+    DOM.ctrlMoreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isClosed = DOM.moreOptionsMenu.style.display === 'none';
+      DOM.moreOptionsMenu.style.display = isClosed ? 'flex' : 'none';
+    });
+    document.addEventListener('click', (e) => {
+      if (DOM.moreOptionsMenu && !DOM.moreOptionsMenu.contains(e.target) && e.target !== DOM.ctrlMoreBtn) {
+        DOM.moreOptionsMenu.style.display = 'none';
+      }
+    });
+  }
+
+  if (DOM.moreOptPip) {
+    DOM.moreOptPip.addEventListener('click', () => {
+      if (document.pictureInPictureElement) {
+        document.exitPictureInPicture().catch(() => {});
+      } else if (DOM.cinemaVideo && document.pictureInPictureEnabled) {
+        DOM.cinemaVideo.requestPictureInPicture().catch(() => {});
+      }
+      if (DOM.moreOptionsMenu) DOM.moreOptionsMenu.style.display = 'none';
     });
   }
 
@@ -1692,9 +1790,6 @@ function setupEventListeners() {
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume().catch(() => {});
     }
-    if (DOM.mobileUnmuteOverlay) {
-      DOM.mobileUnmuteOverlay.style.display = 'none';
-    }
     // Attempt authentic user gesture play
     const p = DOM.cinemaVideo.play();
     if (p !== undefined) {
@@ -1711,20 +1806,95 @@ function setupEventListeners() {
     showToast('🔊 Audio synchronized with room!', 'success');
   }
 
-  if (DOM.mobileUnmuteBtn) {
-    DOM.mobileUnmuteBtn.addEventListener('click', handleUnmuteAndSync);
-    DOM.mobileUnmuteBtn.addEventListener('touchend', handleUnmuteAndSync, { passive: false });
-  }
-  if (DOM.mobileUnmuteOverlay) {
-    DOM.mobileUnmuteOverlay.addEventListener('click', handleUnmuteAndSync);
-    DOM.mobileUnmuteOverlay.addEventListener('touchend', handleUnmuteAndSync, { passive: false });
+
+
+  // Chat & Sidebar Utilities
+  function openChatSidebar() {
+    const stage = document.querySelector('.main-stage');
+    if (stage) stage.classList.add('sidebar-open');
+    if (DOM.toggleSidebarBtn) DOM.toggleSidebarBtn.classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const chatTabBtn = document.querySelector('.tab-btn[data-tab="chatTab"]');
+    if (chatTabBtn) chatTabBtn.classList.add('active');
+    const chatTab = document.getElementById('chatTab');
+    if (chatTab) chatTab.classList.add('active');
+    if (DOM.chatUnreadDot) DOM.chatUnreadDot.style.display = 'none';
+    if (DOM.floatingChatDot) DOM.floatingChatDot.style.display = 'none';
+    if (DOM.wpChatBadge) DOM.wpChatBadge.style.display = 'none';
+    if (DOM.chatInput) DOM.chatInput.focus();
   }
 
-  // Sidebar Toggle
+  function closeChatSidebar() {
+    const stage = document.querySelector('.main-stage');
+    if (stage) stage.classList.remove('sidebar-open');
+    if (DOM.toggleSidebarBtn) DOM.toggleSidebarBtn.classList.remove('active');
+  }
+
+  function toggleChatSidebar() {
+    const stage = document.querySelector('.main-stage');
+    if (stage) {
+      if (stage.classList.contains('sidebar-open')) {
+        closeChatSidebar();
+      } else {
+        openChatSidebar();
+      }
+    }
+  }
+
+  function openPlaylistSidebar() {
+    const stage = document.querySelector('.main-stage');
+    if (stage) stage.classList.add('sidebar-open');
+    if (DOM.toggleSidebarBtn) DOM.toggleSidebarBtn.classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const playlistTabBtn = document.querySelector('.tab-btn[data-tab="playlistTab"]');
+    if (playlistTabBtn) playlistTabBtn.classList.add('active');
+    const playlistTab = document.getElementById('playlistTab');
+    if (playlistTab) playlistTab.classList.add('active');
+    if (DOM.queueUrlInput) DOM.queueUrlInput.focus();
+  }
+
+  // Sidebar Controls
   if (DOM.toggleSidebarBtn) {
-    DOM.toggleSidebarBtn.addEventListener('click', () => {
-      const stage = document.querySelector('.main-stage');
-      if (stage) stage.classList.toggle('sidebar-open');
+    DOM.toggleSidebarBtn.addEventListener('click', toggleChatSidebar);
+  }
+  if (DOM.closeSidebarBtn) {
+    DOM.closeSidebarBtn.addEventListener('click', closeChatSidebar);
+  }
+  if (DOM.sidebarBackdrop) {
+    DOM.sidebarBackdrop.addEventListener('click', closeChatSidebar);
+  }
+  if (DOM.floatingChatBtn) {
+    DOM.floatingChatBtn.addEventListener('click', () => {
+      openChatSidebar();
+    });
+  }
+
+  // Quick Emoji Reactions
+  document.querySelectorAll('.btn-quick-emoji').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const emoji = btn.getAttribute('data-emoji');
+      if (emoji) {
+        if (state.socket && state.socket.connected) {
+          state.socket.emit('send_chat', { text: emoji });
+          sendReaction(emoji);
+        }
+      }
+    });
+  });
+
+  // Typing status indicator emitter
+  let typingTimeout = null;
+  if (DOM.chatInput) {
+    DOM.chatInput.addEventListener('input', () => {
+      if (state.socket && state.socket.connected) {
+        state.socket.emit('user_typing', { isTyping: true });
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+          state.socket.emit('user_typing', { isTyping: false });
+        }, 1600);
+      }
     });
   }
 
@@ -1739,7 +1909,8 @@ function setupEventListeners() {
       document.getElementById(targetId).classList.add('active');
 
       if (targetId === 'chatTab') {
-        DOM.chatUnreadDot.style.display = 'none';
+        if (DOM.chatUnreadDot) DOM.chatUnreadDot.style.display = 'none';
+        if (DOM.wpChatBadge) DOM.wpChatBadge.style.display = 'none';
       }
     });
   });
@@ -1971,6 +2142,9 @@ function updateDeviceCounters(count) {
   DOM.dropdownDeviceCount.textContent = count;
   DOM.sideDeviceCount.textContent = count;
   DOM.tabDeviceCount.textContent = `${count} Active`;
+  if (DOM.chatOnlineCount) {
+    DOM.chatOnlineCount.textContent = `${count} Online`;
+  }
 }
 
 function renderDeviceLists(users, hostId) {
@@ -2024,6 +2198,9 @@ function renderDeviceLists(users, hostId) {
 }
 
 function renderPlaylist(playlist) {
+  if (DOM.wpPlaylistCount) {
+    DOM.wpPlaylistCount.textContent = (playlist && playlist.length) || 0;
+  }
   DOM.playlistItemsList.innerHTML = '';
   if (!playlist || playlist.length === 0) {
     DOM.playlistItemsList.innerHTML = '<p style="font-size:0.78rem;color:var(--text-muted);text-align:center;">Queue is empty.</p>';
@@ -2065,30 +2242,99 @@ function renderPlaylist(playlist) {
   initLucide();
 }
 
+function getAvatarBgColor(name) {
+  const colors = [
+    'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    'linear-gradient(135deg, #06b6d4, #3b82f6)',
+    'linear-gradient(135deg, #ec4899, #f43f5e)',
+    'linear-gradient(135deg, #10b981, #059669)',
+    'linear-gradient(135deg, #f59e0b, #d97706)',
+    'linear-gradient(135deg, #8b5cf6, #d946ef)',
+    'linear-gradient(135deg, #14b8a6, #06b6d4)'
+  ];
+  if (!name) return colors[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
 function appendChatMessage(msg) {
+  // If system message, display as a friendly pill
+  if (msg.type === 'system') {
+    const sysEl = document.createElement('div');
+    sysEl.className = 'chat-msg system-msg';
+    sysEl.innerHTML = `<span class="system-bubble">🎉 ${escapeHtml(msg.text)}</span>`;
+    DOM.chatMessages.appendChild(sysEl);
+    DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
+    return;
+  }
+
   // Ignore action logs (pressed Play, paused, fast-forwarded, connected/disconnected, etc.)
-  if (msg.type === 'system' || msg.type === 'action') {
+  if (msg.type === 'action') {
     return;
   }
 
   const isMe = msg.userId === state.socket.id;
+  const isHost = state.hostId && (msg.userId === state.hostId);
+  const initials = getInitials(msg.username);
+  const avatarBg = getAvatarBgColor(msg.username);
+
   const msgEl = document.createElement('div');
   msgEl.className = `chat-msg ${isMe ? 'is-me' : ''}`;
-  msgEl.innerHTML = `
-    <div class="chat-msg-header">
-      <span class="chat-author-name">${msg.username}</span>
-      <span class="chat-timestamp">${formatChatTime(msg.timestamp)}</span>
-    </div>
-    <div class="chat-bubble">${escapeHtml(msg.text)}</div>
-  `;
+
+  if (isMe) {
+    msgEl.innerHTML = `
+      <div class="chat-msg-row is-me" style="display: flex; justify-content: flex-end; align-items: flex-end; gap: 0.5rem; width: 100%;">
+        <div class="chat-bubble-content" style="align-items: flex-end; max-width: 82%;">
+          <div class="chat-msg-header" style="justify-content: flex-end;">
+            <span class="chat-timestamp">${formatChatTime(msg.timestamp)}</span>
+            <span class="chat-badge-you">You</span>
+          </div>
+          <div class="chat-bubble">${escapeHtml(msg.text)}</div>
+        </div>
+        <div class="chat-avatar-circle" style="background: ${avatarBg};" title="${escapeHtml(msg.username)}">${initials}</div>
+      </div>
+    `;
+  } else {
+    msgEl.innerHTML = `
+      <div class="chat-msg-row" style="display: flex; justify-content: flex-start; align-items: flex-end; gap: 0.5rem; width: 100%;">
+        <div class="chat-avatar-circle" style="background: ${avatarBg};" title="${escapeHtml(msg.username)}">${initials}</div>
+        <div class="chat-bubble-content" style="align-items: flex-start; max-width: 82%;">
+          <div class="chat-msg-header">
+            <span class="chat-author-name">${escapeHtml(msg.username)}</span>
+            ${isHost ? '<span class="chat-badge-host">Host</span>' : ''}
+            <span class="chat-timestamp">${formatChatTime(msg.timestamp)}</span>
+          </div>
+          <div class="chat-bubble">${escapeHtml(msg.text)}</div>
+        </div>
+      </div>
+    `;
+  }
 
   DOM.chatMessages.appendChild(msgEl);
   DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
 
-  // Unread badge indicator if on another tab
+  // Unread badge indicator if sidebar closed or on another tab
+  const stage = document.querySelector('.main-stage');
+  const isSidebarClosed = stage && !stage.classList.contains('sidebar-open');
   const activeTab = document.querySelector('.tab-btn.active');
-  if (activeTab && activeTab.getAttribute('data-tab') !== 'chatTab') {
-    DOM.chatUnreadDot.style.display = 'block';
+  const isDifferentTab = activeTab && activeTab.getAttribute('data-tab') !== 'chatTab';
+
+  if (isSidebarClosed || isDifferentTab) {
+    if (DOM.chatUnreadDot) DOM.chatUnreadDot.style.display = 'block';
+    if (DOM.floatingChatDot) DOM.floatingChatDot.style.display = 'block';
+    if (DOM.wpChatBadge) DOM.wpChatBadge.style.display = 'block';
   }
 }
 
@@ -2101,6 +2347,30 @@ function updateSpeedPillsUI(rate) {
     }
   });
   if (DOM.currentSpeedLabel) DOM.currentSpeedLabel.textContent = `${rate}x`;
+}
+
+function updatePlaybackStatusUI(isPlaying) {
+  if (!DOM.metaStatusDisplay) return;
+  const hasMedia = (DOM.cinemaVideo && (DOM.cinemaVideo.currentSrc || DOM.cinemaVideo.src)) ||
+                   (state.activePlayerType === 'youtube' && state.ytPlayer);
+  if (!hasMedia) {
+    DOM.metaStatusDisplay.textContent = 'Standby';
+    DOM.metaStatusDisplay.className = 'meta-value status-standby';
+    return;
+  }
+  if (state.isBuffering) {
+    DOM.metaStatusDisplay.textContent = 'Buffering';
+    DOM.metaStatusDisplay.className = 'meta-value status-buffering';
+    return;
+  }
+  const playing = typeof isPlaying === 'boolean' ? isPlaying : (DOM.cinemaVideo && !DOM.cinemaVideo.paused);
+  if (playing) {
+    DOM.metaStatusDisplay.textContent = 'Playing';
+    DOM.metaStatusDisplay.className = 'meta-value status-playing';
+  } else {
+    DOM.metaStatusDisplay.textContent = 'Paused';
+    DOM.metaStatusDisplay.className = 'meta-value status-paused';
+  }
 }
 
 function formatDurationHMS(seconds) {
@@ -2117,31 +2387,40 @@ function formatDurationHMS(seconds) {
 function updateVideoMetadataDisplays(url, title) {
   if (title && DOM.displayVideoTitle) {
     DOM.displayVideoTitle.textContent = title;
-    document.title = `Watch ${title} — File2Link`;
+    document.title = (!url || title.toLowerCase().includes('no stream'))
+      ? 'WatchMovieTogether'
+      : `Watch ${title} — File2Link`;
   }
+  const curUrl = url || DOM.cinemaVideo?.currentSrc || DOM.cinemaVideo?.src || '';
   if (DOM.metaFormatDisplay) {
-    const lower = (url || DOM.cinemaVideo.src || '').toLowerCase();
-    let fmt = 'MP4';
-    if (lower.includes('.mkv')) fmt = 'MKV';
-    else if (lower.includes('.m3u8')) fmt = 'HLS';
-    else if (lower.includes('.webm')) fmt = 'WEBM';
-    else if (lower.includes('youtube') || lower.includes('youtu.be')) fmt = 'YouTube';
-    DOM.metaFormatDisplay.textContent = fmt;
+    if (!curUrl) {
+      DOM.metaFormatDisplay.textContent = '--';
+    } else {
+      const lower = curUrl.toLowerCase();
+      let fmt = 'MP4';
+      if (lower.includes('.mkv')) fmt = 'MKV';
+      else if (lower.includes('.m3u8')) fmt = 'HLS';
+      else if (lower.includes('.webm')) fmt = 'WEBM';
+      else if (lower.includes('youtube') || lower.includes('youtu.be')) fmt = 'YouTube';
+      DOM.metaFormatDisplay.textContent = fmt;
+    }
   }
   if (DOM.metaDurationDisplay) {
     const dur = Player.getDuration();
     if (dur && !isNaN(dur) && dur > 0) {
       DOM.metaDurationDisplay.textContent = formatDurationHMS(dur);
+    } else {
+      DOM.metaDurationDisplay.textContent = '--:--';
     }
   }
   if (DOM.metaResolutionDisplay) {
     if (DOM.cinemaVideo.videoWidth && DOM.cinemaVideo.videoHeight) {
       DOM.metaResolutionDisplay.textContent = `${DOM.cinemaVideo.videoWidth}x${DOM.cinemaVideo.videoHeight}`;
+    } else {
+      DOM.metaResolutionDisplay.textContent = '--';
     }
   }
-  if (DOM.metaStatusDisplay) {
-    DOM.metaStatusDisplay.textContent = 'Ready';
-  }
+  updatePlaybackStatusUI(Player.isPlaying());
 }
 
 function updateHostLockUI() {
@@ -2265,11 +2544,18 @@ function openJoinModal(preferWatchMode = false) {
   initLucide();
 }
 
+function getMobileConnectUrl(roomId = state.roomId) {
+  if (state.network.recommendedUrl && !state.network.isCloud) {
+    return `${state.network.recommendedUrl}/?room=${roomId || ''}`;
+  }
+  return `${window.location.origin}/?room=${roomId || ''}`;
+}
+
 function openMobileConnectModal() {
   if (!DOM.mobileConnectModal) return;
   DOM.mobileConnectModal.style.display = 'flex';
 
-  const mobileJoinUrl = getBestShareUrl(state.roomId);
+  const mobileJoinUrl = getMobileConnectUrl(state.roomId);
   if (DOM.mobileLanUrlInput) DOM.mobileLanUrlInput.value = mobileJoinUrl;
 
   // Render QR Code immediately
@@ -2288,7 +2574,7 @@ function openMobileConnectModal() {
 
   // In background, refresh network info and update QR code
   fetchNetworkInfo().then(() => {
-    const updatedUrl = getBestShareUrl(state.roomId);
+    const updatedUrl = getMobileConnectUrl(state.roomId);
     if (DOM.mobileLanUrlInput) DOM.mobileLanUrlInput.value = updatedUrl;
     if (window.QRCode && DOM.qrCodeCanvas) {
       QRCode.toCanvas(DOM.qrCodeCanvas, updatedUrl, {

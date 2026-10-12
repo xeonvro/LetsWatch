@@ -49,7 +49,6 @@
 <body class="dark-theme">
   <!-- Dynamic Ambient Glow Backdrop -->
   <div class="ambient-glow" id="ambientGlow"></div>
-  <canvas id="ambientCanvas" class="ambient-canvas"></canvas>
 
   <!-- ======================================================================
        HOME PAGE (Lobby / Landing View)
@@ -216,11 +215,6 @@
                 <span id="homeCopyLinkText">Copy Link</span>
               </button>
             </div>
-
-            <div class="share-url-preview-row">
-              <span class="preview-label" id="homeShareUrlLabel">LAN / Phone:</span>
-              <input type="text" id="homeShareUrlPreview" readonly />
-            </div>
           </div>
 
           <button type="submit" class="btn-create-submit" id="homeCreateSubmitBtn">
@@ -306,11 +300,6 @@
     <!-- Top Navigation Bar -->
     <header class="navbar">
       <div class="nav-left">
-        <button class="btn-nav-home" id="navHomeBtn" title="Back to Home Page">
-          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
-          <span>Home</span>
-        </button>
-
         <div class="brand">
           <div class="brand-text-col">
             <div class="brand-title-row">
@@ -326,14 +315,6 @@
             <i data-lucide="key" class="w-3.5 h-3.5 text-amber-400"></i>
             <span class="room-label">Room:</span>
             <span class="room-id" id="displayRoomId">cinema-lounge</span>
-          </button>
-          <button class="btn-nav-copy-code" id="navCopyRoomCodeBtn" title="Copy Room Code">
-            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-            <span>Copy Code</span>
-          </button>
-          <button class="btn-create-party-nav" id="openWelcomeHubBtn" title="Create New Room or Join with Code">
-            <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-amber-300"></i>
-            <span>Switch / New</span>
           </button>
         </div>
       </div>
@@ -376,15 +357,10 @@
           </div>
         </div>
 
-        <!-- Top Right Copy Link Button (matching screenshot) -->
-        <button class="btn-top-copy-link" id="navCopyLinkBtn" title="Copy Invite Link">
-          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-          <span>Copy Link</span>
-        </button>
-
-        <!-- Sidebar Toggle -->
-        <button class="btn-icon-pill" id="toggleSidebarBtn" title="Toggle Chat & Queue">
-          <i data-lucide="message-square" class="w-4 h-4 text-slate-300"></i>
+        <!-- Live Chat Toggle in Navbar -->
+        <button class="btn-top-chat" id="toggleSidebarBtn" title="Toggle Live Chat & Queue">
+          <i data-lucide="message-circle" class="w-4 h-4 text-indigo-400"></i>
+          <span>Chat</span>
           <span class="badge-dot" id="chatUnreadDot" style="display: none;"></span>
         </button>
       </div>
@@ -394,9 +370,9 @@
     <main class="main-stage">
       <!-- Theater / Video Area -->
       <section class="theater-section">
-        <!-- Movie Header Block (Above Video - matching File2Link by XeonModz) -->
+        <!-- Movie Header Block (Above Video) -->
         <div class="movie-header-block">
-          <h1 class="movie-main-title" id="displayVideoTitle">Bethlehem Kudumba Unit (2026) Malayalam HQ HDRip - 1080p - x.mkv</h1>
+          <h1 class="movie-main-title" id="displayVideoTitle">No Stream Loaded</h1>
           <div class="movie-badges-row">
             <span class="badge-pill badge-stream-ready">
               <span class="dot-gold"></span>
@@ -416,6 +392,7 @@
 
         <!-- Video Player Stage Container -->
         <div class="player-wrapper" id="playerWrapper">
+          <canvas id="ambientCanvas" class="ambient-canvas"></canvas>
           <div class="video-container" id="videoContainer">
             <!-- HTML5 Video Player Element -->
             <video id="cinemaVideo" playsinline preload="metadata"></video>
@@ -445,55 +422,36 @@
               <span>Host has locked playback controls</span>
             </div>
 
-            <!-- Mobile Audio Autoplay Helper Overlay -->
-            <div class="mobile-unmute-overlay" id="mobileUnmuteOverlay" style="display: none;">
-              <button class="btn-mobile-unmute" id="mobileUnmuteBtn">
-                <i data-lucide="volume-2" class="w-5 h-5 text-white"></i>
-                <span>Tap to Sync & Play Audio</span>
-              </button>
-            </div>
-
-            <!-- Custom Video Controls Overlay -->
+            <!-- Custom Video Controls Overlay (Matching Screenshot) -->
             <div class="custom-controls" id="customControls">
-              <!-- Scrub / Progress Bar -->
-              <div class="progress-bar-container" id="progressContainer">
-                <div class="progress-hover-tooltip" id="progressTooltip">00:00</div>
-                <div class="progress-hover-line" id="progressHoverLine"></div>
-                <div class="progress-buffered" id="progressBuffered"></div>
-                <div class="progress-played" id="progressPlayed"></div>
-                <div class="progress-scrubber" id="progressScrubber"></div>
-              </div>
-
-              <!-- Controls Toolbar -->
+              <!-- Controls Toolbar Row (Above Scrubber) -->
               <div class="controls-bar">
                 <div class="controls-left">
-                  <!-- Play / Pause (inline SVG for reliable toggling) -->
-                  <button class="ctrl-btn main-play" id="ctrlPlayBtn" title="Play/Pause (Space)">
+                  <!-- Minimalist Play / Pause (inline SVG for reliable toggling) -->
+                  <button class="ctrl-btn main-play-minimal" id="ctrlPlayBtn" title="Play/Pause (Space)">
                     <!-- Play icon -->
-                    <svg id="iconPlay" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <svg id="iconPlay" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                       <polygon points="5 3 19 12 5 21 5 3"/>
                     </svg>
                     <!-- Pause icon (hidden by default) -->
-                    <svg id="iconPause" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:none">
+                    <svg id="iconPause" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:none">
                       <rect x="6" y="4" width="4" height="16" rx="1"/>
                       <rect x="14" y="4" width="4" height="16" rx="1"/>
                     </svg>
                   </button>
 
-                  <!-- Rewind -10s -->
-                  <button class="ctrl-btn" id="ctrlRewindBtn" title="Rewind 10 seconds (←)">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4 text-slate-200"></i>
-                  </button>
+                  <!-- Time Display -->
+                  <div class="time-display">
+                    <span id="currentTimeDisplay">0:00</span>
+                    <span class="time-divider">/</span>
+                    <span id="durationTimeDisplay">0:00:00</span>
+                  </div>
+                </div>
 
-                  <!-- Fast Forward +10s -->
-                  <button class="ctrl-btn" id="ctrlFastForwardBtn" title="Fast Forward 10 seconds (→)">
-                    <i data-lucide="rotate-cw" class="w-4 h-4 text-slate-200"></i>
-                  </button>
-
+                <div class="controls-right">
                   <!-- Volume & Mute -->
                   <div class="volume-control-wrap">
                     <button class="ctrl-btn" id="ctrlVolumeBtn" title="Mute/Unmute (M)">
-                      <!-- Volume icon inline SVG -->
                       <svg id="ctrlVolumeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
                         <path id="volWave1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
@@ -505,27 +463,52 @@
                     </div>
                   </div>
 
-                  <!-- Time Display -->
-                  <div class="time-display">
-                    <span id="currentTimeDisplay">00:00</span>
-                    <span class="time-divider">/</span>
-                    <span id="durationTimeDisplay">00:00</span>
+                  <!-- Fullscreen Button -->
+                  <button class="ctrl-btn" id="ctrlFullscreenBtn" title="Fullscreen (F)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                    </svg>
+                  </button>
+
+                  <!-- Three Dots Menu Button (Matching Screenshot) -->
+                  <div class="more-options-wrap">
+                    <button class="ctrl-btn" id="ctrlMoreBtn" title="More Options">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="5" r="2"/>
+                        <circle cx="12" cy="12" r="2"/>
+                        <circle cx="12" cy="19" r="2"/>
+                      </svg>
+                    </button>
+                    <!-- More Options Dropdown -->
+                    <div class="more-options-menu" id="moreOptionsMenu" style="display: none;">
+                      <button class="more-menu-item" id="moreOptPip">
+                        <i data-lucide="tv-2" class="w-4 h-4 text-cyan-400"></i>
+                        <span>Picture in Picture</span>
+                      </button>
+                      <button class="more-menu-item" id="syncStatusPill" title="Click to Force Millisecond Re-Sync">
+                        <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
+                        <span id="syncStatusLabel">Synchronized</span>
+                      </button>
+                      <button class="more-menu-item" id="ctrlRewindBtn">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 text-slate-300"></i>
+                        <span>Rewind 10s</span>
+                      </button>
+                      <button class="more-menu-item" id="ctrlFastForwardBtn">
+                        <i data-lucide="rotate-cw" class="w-4 h-4 text-slate-300"></i>
+                        <span>Forward 10s</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                <div class="controls-right">
-                  <!-- Real-time Sync Status Indicator -->
-                  <button class="sync-status-pill in-sync" id="syncStatusPill" title="Click to Force Millisecond Re-Sync">
-                    <span class="sync-glow"></span>
-                    <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400"></i>
-                    <span id="syncStatusLabel">Synchronized</span>
-                  </button>
-
-                  <!-- Fullscreen -->
-                  <button class="ctrl-btn" id="ctrlFullscreenBtn" title="Fullscreen (F)">
-                    <i data-lucide="maximize" id="fullscreenIcon" class="w-4 h-4 text-slate-200"></i>
-                  </button>
-                </div>
+              <!-- Scrub / Progress Bar (Bottom row matching screenshot) -->
+              <div class="progress-bar-container" id="progressContainer">
+                <div class="progress-hover-tooltip" id="progressTooltip">0:00</div>
+                <div class="progress-hover-line" id="progressHoverLine"></div>
+                <div class="progress-buffered" id="progressBuffered"></div>
+                <div class="progress-played" id="progressPlayed"></div>
+                <div class="progress-scrubber" id="progressScrubber"></div>
               </div>
             </div>
           </div>
@@ -554,19 +537,19 @@
           <div class="metadata-grid">
             <div class="meta-item">
               <span class="meta-title">DURATION</span>
-              <span class="meta-value" id="metaDurationDisplay">2h 35m 13s</span>
+              <span class="meta-value" id="metaDurationDisplay">--:--</span>
             </div>
             <div class="meta-item">
               <span class="meta-title">RESOLUTION</span>
-              <span class="meta-value" id="metaResolutionDisplay">1920x800</span>
+              <span class="meta-value" id="metaResolutionDisplay">--</span>
             </div>
             <div class="meta-item">
               <span class="meta-title">FORMAT</span>
-              <span class="meta-value" id="metaFormatDisplay">MKV</span>
+              <span class="meta-value" id="metaFormatDisplay">--</span>
             </div>
             <div class="meta-item">
               <span class="meta-title">STATUS</span>
-              <span class="meta-value status-ready" id="metaStatusDisplay">Ready</span>
+              <span class="meta-value status-standby" id="metaStatusDisplay">Standby</span>
             </div>
           </div>
           <button class="btn-copy-video-url" id="copyVideoUrlBottomBtn" title="Copy Current Video URL">
@@ -574,39 +557,25 @@
             <span>Copy Video URL</span>
           </button>
         </div>
-
-        <!-- Room Hub Bar: Room Code Display, Copy Code, Create Room, Join Room -->
-        <div class="room-action-bar">
-          <div class="room-action-left">
-            <div class="room-code-badge">
-              <i data-lucide="key" class="w-4 h-4 text-amber-400"></i>
-              <span class="room-badge-label">ROOM CODE:</span>
-              <span class="room-badge-code" id="currentRoomCodeDisplay">cinema-lounge</span>
-            </div>
-            <button class="btn-room-action" id="copyRoomCodeDirectBtn" title="Copy Room Code">
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-              <span>Copy Code</span>
-            </button>
-            <button class="btn-room-action" id="copyRoomLinkDirectBtn" title="Copy Invite Link">
-              <i data-lucide="link" class="w-3.5 h-3.5"></i>
-              <span>Copy Link</span>
-            </button>
-          </div>
-          <div class="room-action-right">
-            <button class="btn-create-room-direct" id="createRoomDirectBtn" title="Create a New Watch Room">
-              <i data-lucide="plus-circle" class="w-4 h-4 text-amber-300"></i>
-              <span>Create Room</span>
-            </button>
-            <button class="btn-join-room-direct" id="joinRoomDirectBtn" title="Join Another Room with Code">
-              <i data-lucide="log-in" class="w-4 h-4 text-cyan-300"></i>
-              <span>Join Room</span>
-            </button>
-          </div>
-        </div>
       </section>
 
       <!-- Interactive Sidebar (Chat, Devices, Playlist, Settings) -->
       <aside class="party-sidebar" id="partySidebar">
+        <!-- Sidebar Top Header with Title, Online Count, and Close Button -->
+        <div class="sidebar-top-header">
+          <div class="sidebar-title-badge">
+            <i data-lucide="message-square" class="w-4 h-4 text-indigo-400"></i>
+            <span class="sidebar-heading-text">Party Lounge</span>
+            <span class="chat-online-pill" id="chatOnlinePill">
+              <span class="dot-online"></span>
+              <span id="chatOnlineCount">1 Online</span>
+            </span>
+          </div>
+          <button type="button" class="btn-close-sidebar" id="closeSidebarBtn" title="Close Sidebar">
+            <i data-lucide="x" class="w-4 h-4 text-slate-300"></i>
+          </button>
+        </div>
+
         <!-- Sidebar Navigation Tabs -->
         <div class="sidebar-tabs">
           <button class="tab-btn active" data-tab="chatTab">
@@ -634,6 +603,28 @@
             <div class="chat-msg system-msg">
               <span class="system-bubble">🎉 Welcome to the sync room! Paste a video or pick a sample stream to watch together.</span>
             </div>
+          </div>
+
+          <!-- Live Typing Indicator -->
+          <div class="chat-typing-indicator" id="chatTypingIndicator" style="display: none;">
+            <div class="typing-wave">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <span class="typing-text" id="chatTypingText">Someone is typing...</span>
+          </div>
+
+          <!-- Quick Emoji Reaction Bar (One-tap reactions for mobile & PC) -->
+          <div class="chat-quick-emojis">
+            <button type="button" class="btn-quick-emoji" data-emoji="❤️" title="Send ❤️">❤️</button>
+            <button type="button" class="btn-quick-emoji" data-emoji="🔥" title="Send 🔥">🔥</button>
+            <button type="button" class="btn-quick-emoji" data-emoji="😂" title="Send 😂">😂</button>
+            <button type="button" class="btn-quick-emoji" data-emoji="🍿" title="Send 🍿">🍿</button>
+            <button type="button" class="btn-quick-emoji" data-emoji="👏" title="Send 👏">👏</button>
+            <button type="button" data-emoji="🎉" class="btn-quick-emoji" title="Send 🎉">🎉</button>
+            <button type="button" class="btn-quick-emoji" data-emoji="😍" title="Send 😍">😍</button>
+            <button type="button" class="btn-quick-emoji" data-emoji="😮" title="Send 😮">😮</button>
           </div>
 
           <form class="chat-input-area" id="chatForm">
@@ -766,6 +757,15 @@
           </div>
         </div>
       </aside>
+
+      <!-- Mobile Drawer Backdrop Overlay -->
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+      <!-- Mobile Floating Quick-Chat Action Button -->
+      <button type="button" class="btn-floating-chat" id="floatingChatBtn" title="Open Live Chat">
+        <i data-lucide="message-circle" class="w-5 h-5 text-white"></i>
+        <span class="floating-badge-dot" id="floatingChatDot" style="display: none;"></span>
+      </button>
     </main>
   </div>
 
