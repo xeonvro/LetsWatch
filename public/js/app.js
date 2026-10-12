@@ -2299,6 +2299,8 @@ function appendChatMessage(msg) {
   const isHost = state.hostId && (msg.userId === state.hostId);
   const initials = getInitials(msg.username);
   const avatarBg = getAvatarBgColor(msg.username);
+  const onlyEmojis = isOnlyEmojis(msg.text);
+  const bubbleClass = `chat-bubble ${onlyEmojis ? 'emoji-only' : ''}`;
 
   const msgEl = document.createElement('div');
   msgEl.className = `chat-msg ${isMe ? 'is-me' : ''}`;
@@ -2311,7 +2313,7 @@ function appendChatMessage(msg) {
             <span class="chat-timestamp">${formatChatTime(msg.timestamp)}</span>
             <span class="chat-badge-you">You</span>
           </div>
-          <div class="chat-bubble">${escapeHtml(msg.text)}</div>
+          <div class="${bubbleClass}">${escapeHtml(msg.text)}</div>
         </div>
         <div class="chat-avatar-circle" style="background: ${avatarBg};" title="${escapeHtml(msg.username)}">${initials}</div>
       </div>
@@ -2326,7 +2328,7 @@ function appendChatMessage(msg) {
             ${isHost ? '<span class="chat-badge-host">Host</span>' : ''}
             <span class="chat-timestamp">${formatChatTime(msg.timestamp)}</span>
           </div>
-          <div class="chat-bubble">${escapeHtml(msg.text)}</div>
+          <div class="${bubbleClass}">${escapeHtml(msg.text)}</div>
         </div>
       </div>
     `;
@@ -2712,8 +2714,15 @@ function renderAmbientCanvas() {
 }
 
 // --- Formatters & Helpers ---
+function isOnlyEmojis(text) {
+  if (!text) return false;
+  const trimmed = text.trim();
+  const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\s){1,6}$/u;
+  return emojiRegex.test(trimmed);
+}
+
 function formatTime(seconds) {
-  if (isNaN(seconds) || seconds < 0) return '00:00';
+  if (isNaN(seconds) || seconds < 0) return '0:00';
   const s = Math.floor(seconds);
   const mins = Math.floor(s / 60);
   const secs = s % 60;
@@ -2722,7 +2731,7 @@ function formatTime(seconds) {
     const remMins = mins % 60;
     return `${hrs}:${remMins < 10 ? '0' : ''}${remMins}:${secs < 10 ? '0' : ''}${secs}`;
   }
-  return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
 function formatChatTime(timestamp) {
